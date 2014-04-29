@@ -66,3 +66,7 @@ To generate the API documentation replace `/path/to/sdk` to appropriate location
 ```
 javadoc -d release/javadoc -sourcepath src/ -classpath /path/to/sdk/platforms/android-18/android.jar net.openspatial
 ```
+
+## Open Spatial SDK for iOS
+
+For information on Open Spatial SDK for iOS see (https://github.com/openspatial/iOS-SDK)
