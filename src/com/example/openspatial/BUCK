@@ -1,0 +1,16 @@
+android_library(
+  name = 'ExampleApp',
+  srcs = glob(['*.java']),
+  deps = [
+    '//res/com/example/openspatial:res',
+    '//release:OpenSpatialSDK',
+  ],
+  visibility = [
+    '//apps/OpenSpatialExample:',
+  ],
+)
+
+project_config(
+  src_target = ':ExampleApp',
+)
+

@@ -1,0 +1,15 @@
+android_resource(
+  name = 'res',
+  res = 'res',
+  package = 'com.example.openspatial',
+  visibility = [
+    '//src/com/example/openspatial:',
+    '//apps/OpenSpatialExample:',
+  ]
+)
+
+project_config(
+  src_target=':res',
+  src_roots = None,
+)
+

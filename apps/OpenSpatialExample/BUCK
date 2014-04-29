@@ -1,0 +1,20 @@
+keystore(
+  name = 'OpenSpatialExample.keystore',
+  store = 'OpenSpatialExample.keystore',
+  properties = 'OpenSpatialExample.keystore.properties',
+)
+
+android_binary(
+  name = 'OpenSpatialExample',
+  manifest = 'AndroidManifest.xml',
+  target = 'Google Inc.:Google APIs:19',
+  keystore = ':OpenSpatialExample.keystore',
+  deps = [
+    '//res/com/example/openspatial:res',
+    '//src/com/example/openspatial:ExampleApp',
+  ],
+)
+
+project_config(
+  src_target=':OpenSpatialExample',
+)
