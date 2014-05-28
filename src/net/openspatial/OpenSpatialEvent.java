@@ -50,6 +50,11 @@ abstract public class OpenSpatialEvent implements Parcelable {
          * Currently not supported
          */
         EVENT_3D_TRANSLATION,
+
+        /**
+         * Gesture event
+         */
+        EVENT_GESTURE,
     }
 
     /**

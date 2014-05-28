@@ -30,6 +30,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This service provides clients with OpenSpatialEvents that they are interested in. Clients bind with this service and
@@ -56,6 +57,9 @@ public class OpenSpatialService extends Service {
             new HashMap<BluetoothDevice, OpenSpatialEvent.EventListener>();
     private final HashMap<BluetoothDevice, OpenSpatialEvent.EventListener> m3DRotationEventCallbacks =
             new HashMap<BluetoothDevice, OpenSpatialEvent.EventListener>();
+    private final HashMap<BluetoothDevice,
+            Map<GestureEvent.GestureEventType, OpenSpatialEvent.EventListener>> mGestureEventCallbacks =
+            new HashMap<BluetoothDevice, Map<GestureEvent.GestureEventType, OpenSpatialEvent.EventListener>>();
 
     private static final String TAG = OpenSpatialService.class.getSimpleName();
 
@@ -85,7 +89,7 @@ public class OpenSpatialService extends Service {
     /**
      * Register for {@link net.openspatial.ButtonEvent}s from the specified {@code device}
      * @param device The device to listen for {@code ButtonEvent}s from. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
+     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
      *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
      * @param listener An instance of {@link net.openspatial.OpenSpatialEvent.EventListener}. When an
      *                 {@link net.openspatial.OpenSpatialEvent} is received, the {@code onEventReceived} method is
@@ -104,7 +108,7 @@ public class OpenSpatialService extends Service {
     /**
      * Register for {@link net.openspatial.PointerEvent}s from the specified {@code device}
      * @param device The device to listen for {@code PointerEvent}s from. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
+     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
      *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
      * @param listener An instance of {@link net.openspatial.OpenSpatialEvent.EventListener}. When an
      *                 {@link net.openspatial.OpenSpatialEvent} is received, the {@code onEventReceived} method is
@@ -123,25 +127,54 @@ public class OpenSpatialService extends Service {
     /**
      * Register for {@link net.openspatial.RotationEvent}s from the specified {@code device}
      * @param device The device to listen for {@code RotationEvent}s from. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
+     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
      *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
      * @param listener An instance of {@link net.openspatial.OpenSpatialEvent.EventListener}. When an
      *                 {@link net.openspatial.OpenSpatialEvent} is received, the {@code onEventReceived} method is
      *                 called
      */
     public void registerForRotationEvents(BluetoothDevice device, OpenSpatialEvent.EventListener listener)
-        throws OpenSpatialException {
-            synchronized (m3DRotationEventCallbacks) {
-                registerCallback(m3DRotationEventCallbacks, device, listener);
-            }
+            throws OpenSpatialException {
+        synchronized (m3DRotationEventCallbacks) {
+            registerCallback(m3DRotationEventCallbacks, device, listener);
+        }
 
         IntentFilter filter = new IntentFilter(OpenSpatialConstants.OPENSPATIAL_ROTATION_EVENT_INTENT_ACTION);
         registerReceiver(mEventReceiver, filter);
     }
 
     /**
+     * Register for {@link net.openspatial.GestureEvent}s for the given device
+     * @param device The device to listen for {@code GestureEvent}s from. This is an instance of
+     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
+     * @param type The type of Gesture. This is a value of type {@link net.openspatial.GestureEvent.GestureEventType}
+     * @param listener An instance of {@link net.openspatial.OpenSpatialEvent.EventListener}. When an
+     *                 {@link net.openspatial.OpenSpatialEvent} is received, the {@code onEventReceived} method is
+     *                 called
+     */
+    public void registerForGestureEvents(BluetoothDevice device,
+                GestureEvent.GestureEventType type,
+                OpenSpatialEvent.EventListener listener)
+            throws OpenSpatialException {
+        Map<GestureEvent.GestureEventType, OpenSpatialEvent.EventListener> listenerMap;
+
+        synchronized (mGestureEventCallbacks) {
+            listenerMap = mGestureEventCallbacks.get(device);
+
+            if (listenerMap == null) {
+                listenerMap = new HashMap<GestureEvent.GestureEventType, OpenSpatialEvent.EventListener>();
+                mGestureEventCallbacks.put(device, listenerMap);
+            }
+            listenerMap.put(type, listener);
+        }
+
+        IntentFilter filter = new IntentFilter(OpenSpatialConstants.OPENSPATIAL_GESTURE_EVENT_INTENT_ACTION);
+        registerReceiver(mEventReceiver, filter);
+    }
+
+    /**
      * Unregister for {@link net.openspatial.ButtonEvent}s from the specified {@code device}
-     * @param device The device to listen for {@code ButtonEvent}s from. This is an instance of
+     * @param device The device to stop listening for {@code ButtonEvent}s from. This is an instance of
      *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
      *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
      */
@@ -153,7 +186,7 @@ public class OpenSpatialService extends Service {
 
     /**
      * Unregister for {@link net.openspatial.PointerEvent}s from the specified {@code device}
-     * @param device The device to listen for {@code PointerEvent}s from. This is an instance of
+     * @param device The device to stop listening for {@code PointerEvent}s from. This is an instance of
      *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
      *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
      */
@@ -165,13 +198,43 @@ public class OpenSpatialService extends Service {
 
     /**
      * Unregister for {@link net.openspatial.RotationEvent}s from the specified {@code device}
-     * @param device The device to listen for {@code RotationEvent}s from. This is an instance of
+     * @param device The device to stop listening for {@code RotationEvent}s from. This is an instance of
      *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
      *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
      */
     public void unRegisterForRotationEvents(BluetoothDevice device) throws OpenSpatialException {
         synchronized (m3DRotationEventCallbacks) {
             unRegisterCallback(m3DRotationEventCallbacks, device);
+        }
+    }
+
+    /**
+     * Unregister for {@link net.openspatial.GestureEvent}s from the specified {@code device}
+     * @param device The device to stop listening for {@code GestureEvent}s from. This is an instance of
+     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
+     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     * @param type   The type of {@link net.openspatial.GestureEvent.GestureEventType} to stop listening for
+     * @throws OpenSpatialException
+     */
+    public void unRegisterForGestureEvents(BluetoothDevice device, GestureEvent.GestureEventType type)
+            throws OpenSpatialException {
+        synchronized (mGestureEventCallbacks) {
+            Map<GestureEvent.GestureEventType, OpenSpatialEvent.EventListener> listenerMap =
+                    mGestureEventCallbacks.get(device);
+
+            if (listenerMap == null) {
+                throw new OpenSpatialException(OpenSpatialException.ErrorCode.DEVICE_NOT_REGISTERED,
+                        "Bluetooth device " + device.getName() + " (" + device.getAddress() +
+                        ") is not registered for any GestureEvents");
+            }
+
+            if (listenerMap.get(type) == null) {
+                throw new OpenSpatialException(OpenSpatialException.ErrorCode.DEVICE_NOT_REGISTERED,
+                        "Bluetooth device " + device.getName() + " (" + device.getAddress() +
+                        ") is not registered for GestureEvent type " + type);
+            }
+
+            listenerMap.remove(type);
         }
     }
 
@@ -196,6 +259,17 @@ public class OpenSpatialService extends Service {
                 case EVENT_3D_ROTATION:
                     synchronized (m3DRotationEventCallbacks) {
                         listener = m3DRotationEventCallbacks.get(device);
+                    }
+                    break;
+                case EVENT_GESTURE:
+                    GestureEvent gEvent = (GestureEvent)event;
+                    synchronized (mGestureEventCallbacks) {
+                        Map<GestureEvent.GestureEventType, OpenSpatialEvent.EventListener> listenerMap =
+                                mGestureEventCallbacks.get(device);
+
+                        if (listenerMap != null) {
+                            listener = listenerMap.get(gEvent.gestureEventType);
+                        }
                     }
                     break;
                 default:
