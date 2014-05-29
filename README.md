@@ -51,13 +51,21 @@ To install the emulator,
 # adb install release/OpenSpatialEmulator.apk
 ```
 
+To install the Bluetooth connector (more on this later)
+```
+# adb install release/OpenSpatialBluetoothConnector.apk
+```
+
 #### How to run
 
-Install both emulator and the example app and start them from launcher.  Play with buttons, tactiles, slider etc. on the emulator app and watch logs for events.
+In order to run the emulator and the app, you will need two Android devices. One device will run the example app and a 'connector' app, the other will run the emulator. Let's call the device running the example app the target device and the device running the emulator the source. To run the setup, follow the steps below:
 
-```# adb logcat```
-
-**NOTE**: Currently both emulator and example app run on the same Android device.  Support for them being on more than one device will be added later.
+1. Pair the source and target devices.
+2. Install the example app and the BluetoothConnector app on the target device.
+3. Install the emulator on the source device.
+4. Start the connector app on the target device from the launcher first, then launch the example app.
+5. Start the Emulator on the source device. Select the target device from the device list.
+6. Play with buttons, tactiles, slider etc. on the emulator app and watch logs for events using ```adb logcat```
 
 #### How to generate JavaDoc
 
