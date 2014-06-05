@@ -23,6 +23,7 @@ public class OpenSpatialConstants {
 
     public static final String BLUETOOTH_DEVICE = "net.openspatial.BLUETOOTH_DEVICE";
     public static final String OPENSPATIAL_EVENT = "net.openspatial.OPENSPATIAL_EVENT";
+    public static final String CONNECTED_DEVICES = "net.openspatial.CONNECTED_DEVICES";
 
     public static final String OPENSPATIAL_BUTTON_EVENT_INTENT_ACTION =
             "net.openspatial.OPENSPATIAL_BUTTON_EVENT_INTENT_ACTION";
@@ -32,4 +33,8 @@ public class OpenSpatialConstants {
             "net.openspatial.OPENSPATIAL_ROTATION_EVENT_INTENT_ACTION";
     public static final String OPENSPATIAL_GESTURE_EVENT_INTENT_ACTION =
             "net.openspatial.OPENSPATIAL_GESTURE_EVENT_INTENT_ACTION";
+    public static final String OPENSPATIAL_LIST_DEVICES_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_LIST_DEVICES_INTENT_ACTION";
+    public static final String OPENSPATIAL_DEVICE_LIST_UPDATED_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_DEVICE_LIST_UPDATED_INTENT_ACTION";
 }

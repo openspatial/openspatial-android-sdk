@@ -25,12 +25,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.util.Log;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This service provides clients with OpenSpatialEvents that they are interested in. Clients bind with this service and
@@ -45,7 +44,12 @@ public class OpenSpatialService extends Service {
     private final BroadcastReceiver mEventReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            processIntent(intent);
+            if (intent.getAction().equals(OpenSpatialConstants.OPENSPATIAL_DEVICE_LIST_UPDATED_INTENT_ACTION)) {
+                Log.d(TAG, "Got device list updated event");
+                processDeviceListUpdatedIntent(intent);
+            } else {
+                processEventIntent(intent);
+            }
         }
     };
 
@@ -60,6 +64,8 @@ public class OpenSpatialService extends Service {
     private final HashMap<BluetoothDevice,
             Map<GestureEvent.GestureEventType, OpenSpatialEvent.EventListener>> mGestureEventCallbacks =
             new HashMap<BluetoothDevice, Map<GestureEvent.GestureEventType, OpenSpatialEvent.EventListener>>();
+    private final Set<OpenSpatialServiceCallback> mDeviceListUpdateCallbacks =
+            new HashSet<OpenSpatialServiceCallback>();
 
     private static final String TAG = OpenSpatialService.class.getSimpleName();
 
@@ -238,8 +244,22 @@ public class OpenSpatialService extends Service {
         }
     }
 
+    public void getConnectedDevices(final OpenSpatialServiceCallback cb) {
+        synchronized (mDeviceListUpdateCallbacks) {
+            mDeviceListUpdateCallbacks.add(cb);
+        }
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(OpenSpatialConstants.OPENSPATIAL_DEVICE_LIST_UPDATED_INTENT_ACTION);
+        registerReceiver(mEventReceiver, filter);
+
+        Intent intent = new Intent();
+        intent.setAction(OpenSpatialConstants.OPENSPATIAL_LIST_DEVICES_INTENT_ACTION);
+        sendBroadcast(intent);
+    }
+
     // Package private because it is used in tests
-    void processIntent(Intent i) {
+    void processEventIntent(Intent i) {
         OpenSpatialEvent event = i.getParcelableExtra(OpenSpatialConstants.OPENSPATIAL_EVENT);
         BluetoothDevice device = i.getParcelableExtra(OpenSpatialConstants.BLUETOOTH_DEVICE);
 
@@ -287,6 +307,28 @@ public class OpenSpatialService extends Service {
         }
     }
 
+    private void processDeviceListUpdatedIntent(Intent intent) {
+        Parcelable[] parceledDevices = intent.getParcelableArrayExtra(OpenSpatialConstants.CONNECTED_DEVICES);
+        Set<BluetoothDevice> connectedDevices = new HashSet<BluetoothDevice>();
+        if (parceledDevices != null) {
+            for (Parcelable p : parceledDevices) {
+                connectedDevices.add((BluetoothDevice)p);
+            }
+        } else {
+            Log.d(TAG, "parceledDevices was null");
+        }
+        Log.d(TAG, "Num connected devices: " + connectedDevices.size());
+        synchronized (mDeviceListUpdateCallbacks) {
+            Log.d(TAG, "Calling callback");
+            for (OpenSpatialServiceCallback cb : mDeviceListUpdateCallbacks) {
+                cb.deviceListUpdated(connectedDevices);
+            }
+
+            // Clear the callbacks once updated
+            mDeviceListUpdateCallbacks.clear();
+        }
+    }
+
     public class OpenSpatialServiceBinder extends Binder {
         public OpenSpatialService getService() {
             return OpenSpatialService.this;
@@ -314,5 +356,9 @@ public class OpenSpatialService extends Service {
     public void onDestroy() {
         super.onDestroy();
         unregisterReceiver(mEventReceiver);
+    }
+
+    public interface OpenSpatialServiceCallback {
+        public void deviceListUpdated(Set<BluetoothDevice> devices);
     }
 }
