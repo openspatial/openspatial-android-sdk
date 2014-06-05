@@ -66,15 +66,31 @@ public class MainScreenActivity extends Activity {
                     @Override
                     public void onEventReceived(OpenSpatialEvent event) {
                         RotationEvent rotationEvent = (RotationEvent) event;
-                        Quaternion quaternion = rotationEvent.getQuaternion();
-                        Log.d(TAG,
-                                "Got rotationEvent with value (x=" + quaternion.x + ", y=" + quaternion.y +
-                                ", z=" + quaternion.z + ", w=" + quaternion.w +")");
 
+                        // Commenting because this is to noisy
+                        //Log.d(TAG, "Got rotationEvent with value " + rotationEvent.getQuaternion());
                     }
                 });
             } catch (OpenSpatialException e) {
                 Log.e(TAG, "Error registering for PointerEvent " + e);
+            }
+
+            OpenSpatialEvent.EventListener gestureEventListener = new OpenSpatialEvent.EventListener() {
+                @Override
+                public void onEventReceived(OpenSpatialEvent event) {
+                    GestureEvent gestureEvent = (GestureEvent)event;
+                    Log.d(TAG, "Got GestureEvent of type " + gestureEvent.gestureEventType +
+                            " with magnitude " + gestureEvent.magnitude);
+                }
+            };
+
+            try {
+                mService.registerForGestureEvents(null, GestureEvent.GestureEventType.SWIPE_UP, gestureEventListener);
+                mService.registerForGestureEvents(null, GestureEvent.GestureEventType.SWIPE_DOWN, gestureEventListener);
+                mService.registerForGestureEvents(null, GestureEvent.GestureEventType.SWIPE_LEFT, gestureEventListener);
+                mService.registerForGestureEvents(null, GestureEvent.GestureEventType.SWIPE_RIGHT, gestureEventListener);
+            } catch (OpenSpatialException e) {
+                Log.e(TAG, "Error registering for GestureEvent " + e);
             }
         }
 
