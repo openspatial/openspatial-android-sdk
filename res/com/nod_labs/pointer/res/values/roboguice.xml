@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="roboguice_modules">
+        <item>com.nod_labs.roboguice.RoboGuiceExtensionsModule</item>
+    </string-array>
+</resources>

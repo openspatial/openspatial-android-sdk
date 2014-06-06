@@ -1,0 +1,20 @@
+android_library(
+  name = 'NodPointer',
+  srcs = glob(['*.java']),
+  deps = [
+    '//res/com/nod_labs/pointer:res',
+    '//src/com/nod_labs/roboguice:RoboGuiceExtensions',
+    '//thirdparty:roboguice',
+    '//thirdparty:guice',
+    '//thirdparty:jsr330',
+    '//thirdparty:jsr305',
+  ],
+  visibility = [
+    'PUBLIC',
+  ],
+)
+
+project_config(
+  src_target = ':NodPointer',
+)
+

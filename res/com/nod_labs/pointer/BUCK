@@ -1,0 +1,14 @@
+android_resource(
+  name = 'res',
+  res = 'res',
+  package = 'com.nod_labs.pointer',
+  visibility = [
+    '//src/com/nod_labs/pointer:',
+  ]
+)
+
+project_config(
+  src_target=':res',
+  src_roots = None,
+)
+
