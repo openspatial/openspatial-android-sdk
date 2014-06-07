@@ -1,0 +1,17 @@
+android_library(
+  name = 'RoboGuiceExtensions',
+  srcs = glob(['*.java']),
+  deps = [
+    '//thirdparty:roboguice',
+    '//thirdparty:guice',
+    '//thirdparty:jsr330',
+    '//thirdparty:jsr305',
+  ],
+  visibility = [
+    'PUBLIC'
+  ]
+)
+
+project_config(
+  src_target = ':RoboGuiceExtensions',
+)
