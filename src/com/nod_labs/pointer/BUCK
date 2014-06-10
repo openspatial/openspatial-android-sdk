@@ -4,6 +4,7 @@ android_library(
   deps = [
     '//res/com/nod_labs/pointer:res',
     '//src/com/nod_labs/roboguice:RoboGuiceExtensions',
+    '//release:OpenSpatialSDK',
     '//thirdparty:roboguice',
     '//thirdparty:guice',
     '//thirdparty:jsr330',

@@ -20,6 +20,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.view.ViewGroup;
 
 import java.util.HashMap;
@@ -146,6 +147,10 @@ public class PointerView extends ViewGroup {
         updatePointerBitmap(pointerId);
     }
 
+    public Point getCurrentPosition(String pointerId) {
+        return new Point(mX.get(pointerId), mY.get(pointerId));
+    }
+
     @Override
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -154,8 +159,8 @@ public class PointerView extends ViewGroup {
 
         for (String pointerId : pointerIds) {
             canvas.drawBitmap(mPointerBitmaps.get(pointerId),
-                    mX.get(pointerId),
-                    mY.get(pointerId),
+                    mX.get(pointerId) - (2 * mRadius.get(pointerId)),
+                    mY.get(pointerId) - mRadius.get(pointerId),
                     mPointerPaints.get(pointerId));
         }
     }
