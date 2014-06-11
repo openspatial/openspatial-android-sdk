@@ -66,7 +66,7 @@ public class PointerService extends RoboService {
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE |
-                        WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                        WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
                 PixelFormat.TRANSLUCENT);
         params.gravity = Gravity.LEFT | Gravity.TOP;
 
@@ -174,13 +174,17 @@ public class PointerService extends RoboService {
     private PointerViewCallback getCallbackForView(String pointerId, Point position) {
         PointerViewCallback cb = null;
         View v = getCurrentView(position);
+
         if (v == null) {
             Log.e(TAG, "Unknown view at position: (" + position.x + ", " + position.y + ")");
-        } else {
-            cb = mRegisteredViews.get(v);
+            return null;
         }
 
-        return cb;
+        return getCallbackForView(pointerId, v);
+    }
+
+    private PointerViewCallback getCallbackForView(String pointerId, View v) {
+        return  mRegisteredViews.get(v);
     }
 
     public void performButtonEvent(final String pointerId, final ButtonEvent event) {
@@ -188,24 +192,32 @@ public class PointerService extends RoboService {
             @Override
             public void run() {
                 Point currentPosition = getCurrentPositionOnScreen(pointerId);
-                PointerViewCallback cb = getCallbackForView(pointerId, currentPosition);
+                View v = getCurrentView(currentPosition);
+                Log.d(TAG, "Click on view: " + v.toString());
+
+                PointerViewCallback cb = getCallbackForView(pointerId, v);
                 boolean touch2Down = mTouch2State.get(pointerId);
+
                 if (cb != null) {
                     cb.onButtonEvent(pointerId, event, currentPosition.x, currentPosition.y, PointerService.this);
+                }
 
-                    switch (event.buttonEventType) {
-                        case TOUCH2_DOWN:
-                            touch2Down = true;
-                            break;
-                        case TOUCH2_UP:
-                            if (touch2Down) {
-                                Log.d(TAG, "Sending click event for device " + pointerId);
+                switch (event.buttonEventType) {
+                    case TOUCH2_DOWN:
+                        touch2Down = true;
+                        break;
+                    case TOUCH2_UP:
+                        if (touch2Down) {
+                            Log.d(TAG, "Sending click event for device " + pointerId);
+                            if (cb != null) {
                                 cb.onClick(pointerId, currentPosition.x, currentPosition.y, PointerService.this);
+                            } else {
+                                v.callOnClick();
                             }
-                            touch2Down = false;
-                            break;
-                        // We don't care about the others (for now anyway)
-                    }
+                        }
+                        touch2Down = false;
+                        break;
+                    // We don't care about the others (for now anyway)
                 }
 
                 mTouch2State.put(pointerId, touch2Down);
@@ -221,6 +233,15 @@ public class PointerService extends RoboService {
             @Override
             public void run() {
                 mRegisteredViews.put(v, cb);
+                mViewZindex.put(v, zIndex);
+            }
+        });
+    }
+
+    public void updateViewZindex(final View v, final int zIndex) {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
                 mViewZindex.put(v, zIndex);
             }
         });
