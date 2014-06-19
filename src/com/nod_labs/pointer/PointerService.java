@@ -193,7 +193,6 @@ public class PointerService extends RoboService {
             public void run() {
                 Point currentPosition = getCurrentPositionOnScreen(pointerId);
                 View v = getCurrentView(currentPosition);
-                Log.d(TAG, "Click on view: " + v.toString());
 
                 PointerViewCallback cb = getCallbackForView(pointerId, v);
                 boolean touch2Down = mTouch2State.get(pointerId);
