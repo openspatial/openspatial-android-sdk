@@ -19,6 +19,7 @@ package net.openspatial;
 public class OpenSpatialConstants {
     public static final String OPENSPATIAL_SERVICE_UUID = "00000002-0000-1000-8000-A0E5E9000000";
     public static final String OPENSPATIAL_POINTER_MOTION_CHARACTERISTIC = "00000200-0000-1000-8000-A0E5E9000000";
+    public static final String OPENSPATIAL_3D_ROTATION_CHARACTERISTIC = "00000203-0000-1000-8000-A0E5E9000000";
     public static final String OPENSPATIAL_GESTURE_CHARACTERISTIC = "00000204-0000-1000-8000-A0E5E9000000";
 
     public static final String BLUETOOTH_DEVICE = "net.openspatial.BLUETOOTH_DEVICE";
