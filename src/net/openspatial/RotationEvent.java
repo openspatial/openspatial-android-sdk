@@ -27,15 +27,15 @@ import android.os.Parcel;
  * @see <a href="http://en.wikipedia.org/wiki/Rotation_matrix#In_three_dimensions">Rotation Matrix</a>
  */
 public class RotationEvent extends OpenSpatialEvent {
-    private Quaternion mQuaternion;
+    private EulerAngle mEulerAngle;
 
     /**
      * Construct an instance of RotationEvent based on a quaternion
-     * @param quaternion The quaternion representing this rotation
+     * @param eulerAngle The Euler angle representing this rotation
      */
-    public RotationEvent(Quaternion quaternion) {
+    public RotationEvent(EulerAngle eulerAngle) {
         super(EventType.EVENT_3D_ROTATION);
-        mQuaternion = quaternion;
+        mEulerAngle= eulerAngle;
     }
 
     /**
@@ -43,7 +43,7 @@ public class RotationEvent extends OpenSpatialEvent {
      * @return The Quaternion representing the rotation
      */
     public Quaternion getQuaternion() {
-        return mQuaternion;
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -59,7 +59,7 @@ public class RotationEvent extends OpenSpatialEvent {
      * @return The EulerAngle representing the rotation
      */
     public EulerAngle getEulerAngle() {
-        throw new UnsupportedOperationException();
+        return mEulerAngle;
     }
 
     // Methods to make this class Parcelable
@@ -71,19 +71,17 @@ public class RotationEvent extends OpenSpatialEvent {
     @Override
     public void writeToParcel(Parcel out, int flags) {
         super.writeToParcel(out, flags);
-        out.writeDouble(mQuaternion.x);
-        out.writeDouble(mQuaternion.y);
-        out.writeDouble(mQuaternion.z);
-        out.writeDouble(mQuaternion.w);
+        out.writeDouble(mEulerAngle.roll);
+        out.writeDouble(mEulerAngle.pitch);
+        out.writeDouble(mEulerAngle.yaw);
     }
 
     private RotationEvent(Parcel in) {
         super(in);
-        mQuaternion = new Quaternion();
-        mQuaternion.x = in.readDouble();
-        mQuaternion.y = in.readDouble();
-        mQuaternion.z = in.readDouble();
-        mQuaternion.w = in.readDouble();
+        mEulerAngle = new EulerAngle();
+        mEulerAngle.roll = in.readDouble();
+        mEulerAngle.pitch = in.readDouble();
+        mEulerAngle.yaw = in.readDouble();
     }
 
     public static final Creator<RotationEvent> CREATOR = new Creator<RotationEvent>() {
