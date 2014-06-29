@@ -23,6 +23,25 @@ package net.openspatial;
  */
 public class EulerAngle {
     /**
+     * Create an Euler angle with {@code roll}, {@code pitch} and {@code yaw} initialized to 0
+     */
+    public EulerAngle() {
+        roll = pitch = yaw = 0.0;
+    }
+
+    /**
+     * Create an Euler angle with the specified {@code roll}, {@code pitch} and {@code yaw} values
+     * @param r The roll value
+     * @param p The pitch value
+     * @param y The yaw value
+     */
+    public EulerAngle(double r, double p, double y) {
+        roll = r;
+        pitch = p;
+        yaw = y;
+    }
+
+    /**
      * Rotation about the y axis in radians
      */
     public double roll;
