@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Nod Labs
+ * Copyright (C) 2014 Nod Labs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,9 +49,6 @@ public class PointerService extends RoboService {
     private final Map<View, PointerViewCallback> mRegisteredViews = new HashMap<View, PointerViewCallback>();
     private final Map<View, Integer> mViewZindex = new HashMap<View, Integer>();
 
-    private Point mTopLeft = new Point();
-    private Point mBottomRight = new Point();
-    private View mCurrentView;
     private final Map<String, Boolean> mTouch2State = new HashMap<String, Boolean>();
 
     private static final String TAG = PointerService.class.getSimpleName();
@@ -210,7 +207,7 @@ public class PointerService extends RoboService {
                             Log.d(TAG, "Sending click event for device " + pointerId);
                             if (cb != null) {
                                 cb.onClick(pointerId, currentPosition.x, currentPosition.y, PointerService.this);
-                            } else {
+                            } else if (v != null) {
                                 v.callOnClick();
                             }
                         }
@@ -251,46 +248,38 @@ public class PointerService extends RoboService {
             @Override
             public void run() {
                 mRegisteredViews.remove(v);
-                if (v == mCurrentView) {
-                    mCurrentView = null;
-                }
             }
         });
     }
 
-    private boolean withinView(View v, Point position, Point topLeft, Point bottomRight) {
+    private boolean withinView(View v, Point position) {
+        int[] location = new int[2];
+        v.getLocationOnScreen(location);
+
+        Point topLeft = new Point(location[0], location[1]);
+        Point bottomRight = new Point(topLeft.x + v.getWidth(), topLeft.y + v.getHeight());
+
         return (position.x > topLeft.x &&
                 position.x < bottomRight.x &&
                 position.y > topLeft.y &&
                 position.y < bottomRight.y);
     }
 
-    private boolean withinCurrentView(Point position) {
-        return (mCurrentView != null && withinView(mCurrentView,position, mTopLeft, mBottomRight));
-    }
-
     private View getCurrentView(Point position) {
-        int[] location = new int[2];
         int maxZindex = Integer.MIN_VALUE;
 
+        View currentView = null;
         for (View v : mRegisteredViews.keySet()) {
-            v.getLocationOnScreen(location);
-
-            Point topLeft = new Point(location[0], location[1]);
-            Point bottomRight = new Point(topLeft.x + v.getWidth(), topLeft.y + v.getHeight());
-
-            if (withinView(v, position, topLeft, bottomRight)) {
+            if (withinView(v, position)) {
                 int zIndex = mViewZindex.get(v);
                 if (zIndex >= maxZindex) {
-                    mCurrentView = v;
-                    mTopLeft = topLeft;
-                    mBottomRight = bottomRight;
+                    currentView = v;
                     maxZindex = zIndex;
                 }
             }
         }
 
-        return mCurrentView;
+        return currentView;
     }
 
     @Override
