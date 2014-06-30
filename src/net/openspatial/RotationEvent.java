@@ -30,12 +30,22 @@ public class RotationEvent extends OpenSpatialEvent {
     private EulerAngle mEulerAngle;
 
     /**
-     * Construct an instance of RotationEvent based on a quaternion
+     * Construct an instance of RotationEvent based on an Euler angle
      * @param eulerAngle The Euler angle representing this rotation
      */
     public RotationEvent(EulerAngle eulerAngle) {
         super(EventType.EVENT_3D_ROTATION);
         mEulerAngle= eulerAngle;
+    }
+
+    /**
+     * Construct an instance of RotationEvent based on a quaternion
+     *
+     * @param quaternion The quaternion representing this rotation
+     */
+    public RotationEvent(Quaternion quaternion) {
+        super(EventType.EVENT_3D_ROTATION);
+        throw new UnsupportedOperationException();
     }
 
     /**
