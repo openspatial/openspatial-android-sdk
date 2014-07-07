@@ -22,8 +22,8 @@ import java.nio.ByteOrder;
 public class OpenSpatialPointerEvent {
     public static final String TAG = OpenSpatialPointerEvent.class.getSimpleName();
 
-    public static final int LEFT_BUTTON_PRESSED = 0x1;
-    public static final int RIGHT_BUTTON_PRESSED = 0x2;
+    public static final int LEFT_BUTTON_PRESSED = 0x2;
+    public static final int RIGHT_BUTTON_PRESSED = 0x1;
     public static final int SLIDER_BUTTON_PRESSED = 0x4;
     public static final int TACTILE_BUTTON1_PRESSED = 0x10;
     public static final int TACTILE_BUTTON2_PRESSED = 0x01;
