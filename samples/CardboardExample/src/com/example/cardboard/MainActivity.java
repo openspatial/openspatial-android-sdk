@@ -105,12 +105,12 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                     // Pick the first connected device
                     BluetoothDevice device = (BluetoothDevice) bluetoothDevices.toArray()[0];
                     try {
-                        openSpatialService.registerForRotationEvents(device, new OpenSpatialEvent.EventListener() {
+                        openSpatialService.registerForPose6DEvents(device, new OpenSpatialEvent.EventListener() {
                             @Override
                             public void onEventReceived(OpenSpatialEvent openSpatialEvent) {
                                 Log.d(TAG, "Got rotation event!");
-                                RotationEvent rotationEvent = (RotationEvent) openSpatialEvent;
-                                EulerAngle eulerAngle = rotationEvent.getEulerAngle();
+                                Pose6DEvent pose6DEvent = (Pose6DEvent) openSpatialEvent;
+                                EulerAngle eulerAngle = pose6DEvent.getEulerAngle();
                                 xrot += -getDegrees((float)eulerAngle.pitch);
                                 //xrot = adjust(xrot, 27.5f);
                                 yrot += getDegrees((float)eulerAngle.yaw);
