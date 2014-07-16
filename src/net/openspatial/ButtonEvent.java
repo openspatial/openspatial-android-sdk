@@ -30,6 +30,16 @@ public class ButtonEvent extends OpenSpatialEvent {
      */
     public enum ButtonEventType {
         /**
+         * TOUCH0 was touched
+         */
+        TOUCH0_DOWN,
+
+        /**
+         * TOUCH0 was released
+         */
+        TOUCH0_UP,
+
+        /**
          * TOUCH1 was touched
          */
         TOUCH1_DOWN,
@@ -50,6 +60,16 @@ public class ButtonEvent extends OpenSpatialEvent {
         TOUCH2_UP,
 
         /**
+         * TACTILE0 was pressed
+         */
+        TACTILE0_DOWN,
+
+        /**
+         * TACTILE0 was released
+         */
+        TACTILE0_UP,
+
+        /**
          * TACTILE1 was pressed
          */
         TACTILE1_DOWN,
@@ -58,37 +78,6 @@ public class ButtonEvent extends OpenSpatialEvent {
          * TACTILE1 was released
          */
         TACTILE1_UP,
-
-        /**
-         * TACTILE2 was pressed
-         */
-        TACTILE2_DOWN,
-
-        /**
-         * TACTILE2 was released
-         */
-        TACTILE2_UP,
-
-        /**
-         * Scroll down action was detected on the slider
-         */
-        SCROLL_DOWN,
-
-        /**
-         * Scroll up action was detected on the slider
-         */
-        SCROLL_UP,
-
-        /**
-         * The slider was touched. This is an instance of a touch and not a scroll. In the case of a scroll, no TOUCH
-         * will be generated and vice versa
-         */
-        SCROLL_TOUCH_DOWN,
-
-        /**
-         * The slider was released
-         */
-        SCROLL_TOUCH_UP,
     }
 
     /**

@@ -131,21 +131,21 @@ public class OpenSpatialService extends Service {
     }
 
     /**
-     * Register for {@link net.openspatial.RotationEvent}s from the specified {@code device}
-     * @param device The device to listen for {@code RotationEvent}s from. This is an instance of
+     * Register for {@link net.openspatial.Pose6DEvent}s from the specified {@code device}
+     * @param device The device to listen for {@code Pose6DEvent}s from. This is an instance of
      *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
      *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
      * @param listener An instance of {@link net.openspatial.OpenSpatialEvent.EventListener}. When an
      *                 {@link net.openspatial.OpenSpatialEvent} is received, the {@code onEventReceived} method is
      *                 called
      */
-    public void registerForRotationEvents(BluetoothDevice device, OpenSpatialEvent.EventListener listener)
+    public void registerForPose6DEvents(BluetoothDevice device, OpenSpatialEvent.EventListener listener)
             throws OpenSpatialException {
         synchronized (m3DRotationEventCallbacks) {
             registerCallback(m3DRotationEventCallbacks, device, listener);
         }
 
-        IntentFilter filter = new IntentFilter(OpenSpatialConstants.OPENSPATIAL_ROTATION_EVENT_INTENT_ACTION);
+        IntentFilter filter = new IntentFilter(OpenSpatialConstants.OPENSPATIAL_POSE6D_EVENT_INTENT_ACTION);
         registerReceiver(mEventReceiver, filter);
     }
 
@@ -203,12 +203,12 @@ public class OpenSpatialService extends Service {
     }
 
     /**
-     * Unregister for {@link net.openspatial.RotationEvent}s from the specified {@code device}
-     * @param device The device to stop listening for {@code RotationEvent}s from. This is an instance of
+     * Unregister for {@link net.openspatial.Pose6DEvent}s from the specified {@code device}
+     * @param device The device to stop listening for {@code Pose6DEvents}s from. This is an instance of
      *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
      *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
      */
-    public void unRegisterForRotationEvents(BluetoothDevice device) throws OpenSpatialException {
+    public void unRegisterForPose6DEvents(BluetoothDevice device) throws OpenSpatialException {
         synchronized (m3DRotationEventCallbacks) {
             unRegisterCallback(m3DRotationEventCallbacks, device);
         }
@@ -276,7 +276,7 @@ public class OpenSpatialService extends Service {
                         listener = mPointerEventCallbacks.get(device);
                     }
                     break;
-                case EVENT_3D_ROTATION:
+                case EVENT_POSE6D:
                     synchronized (m3DRotationEventCallbacks) {
                         listener = m3DRotationEventCallbacks.get(device);
                     }

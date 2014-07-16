@@ -132,14 +132,14 @@ public class MainScreenActivity extends Activity {
         }
 
         try {
-            mOpenSpatialService.registerForRotationEvents(device, new OpenSpatialEvent.EventListener() {
+            mOpenSpatialService.registerForPose6DEvents(device, new OpenSpatialEvent.EventListener() {
                 @Override
                 public void onEventReceived(OpenSpatialEvent event) {
-                    RotationEvent rotationEvent = (RotationEvent) event;
+                    Pose6DEvent pose6DEvent = (Pose6DEvent) event;
                 }
             });
         } catch (OpenSpatialException e) {
-            Log.e(TAG, "Error registering for PointerEvent " + e);
+            Log.e(TAG, "Error registering for Pose6DEvent " + e);
         }
 
         OpenSpatialEvent.EventListener gestureEventListener = new OpenSpatialEvent.EventListener() {

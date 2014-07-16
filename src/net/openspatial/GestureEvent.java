@@ -36,6 +36,26 @@ public class GestureEvent extends OpenSpatialEvent {
          * The user swiped right
          */
         SWIPE_RIGHT,
+
+        /**
+         * The user rotated clockwise
+         */
+        CLOCKWISE_ROTATION,
+
+        /**
+         * The user rotated counterclockwise
+         */
+        COUNTERCLOCKWISE_ROTATION,
+
+        /**
+         * The user scrolled down
+         */
+        SCROLL_DOWN,
+
+        /**
+         * The user scrolled up
+         */
+        SCROLL_UP,
     }
 
     /**

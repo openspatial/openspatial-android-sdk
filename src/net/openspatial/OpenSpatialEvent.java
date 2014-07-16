@@ -41,15 +41,9 @@ abstract public class OpenSpatialEvent implements Parcelable {
 
         /**
          * 3D rotation event
-         * @see net.openspatial.RotationEvent
+         * @see net.openspatial.Pose6DEvent
          */
-        EVENT_3D_ROTATION,
-
-        /**
-         * 3D translation event
-         * Currently not supported
-         */
-        EVENT_3D_TRANSLATION,
+        EVENT_POSE6D,
 
         /**
          * Gesture event
