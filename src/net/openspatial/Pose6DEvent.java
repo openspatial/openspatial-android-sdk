@@ -100,7 +100,7 @@ public class Pose6DEvent extends OpenSpatialEvent {
      * @return The EulerAngle representing the rotation
      */
     public EulerAngle getEulerAngle() {
-        if (mEulerAngle != null) {
+        if (mEulerAngle == null) {
             mEulerAngle = new EulerAngle(roll, pitch, yaw);
         }
 
