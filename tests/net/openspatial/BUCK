@@ -1,0 +1,21 @@
+robolectric_test(
+  name = 'tests',
+  srcs = glob(['*.java']),
+  deps = [
+    '//src/net/openspatial:OpenSpatialSDK',
+    '//thirdparty:hamcrest',
+    '//thirdparty:junit',
+    '//thirdparty:robolectric',
+    '//thirdparty:mockito',
+  ],
+  source_under_test = [
+    '//src/net/openspatial:OpenSpatialSDK',
+  ],
+  visibility = [
+    'PUBLIC',
+  ]
+)
+
+project_config(
+  test_target = ':tests'
+)

@@ -2,7 +2,7 @@
     example = //apps/OpenSpatialExample:OpenSpatialExample
 
 [java]
-    src_roots = /src
+    src_roots = /src, /tests
 
 [project]
     # IntelliJ requires that every Android module have an
