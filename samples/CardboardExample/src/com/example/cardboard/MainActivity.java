@@ -127,7 +127,15 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                             @Override
                             public void onEventReceived(OpenSpatialEvent openSpatialEvent) {
                                 Log.d(TAG, "Got button event!");
-                                reCenterCube();
+
+                                ButtonEvent bEvent = (ButtonEvent)openSpatialEvent;
+                                if (bEvent.buttonEventType == ButtonEvent.ButtonEventType.TOUCH2_DOWN) {
+                                    setCubeColor(DATA.GRABBED_CUBE_COLORS);
+                                } else if (bEvent.buttonEventType == ButtonEvent.ButtonEventType.TOUCH2_UP) {
+                                    setCubeColor(DATA.CUBE_COLORS);
+                                } else {
+                                    reCenterCube();
+                                }
                             }
                         });
                     } catch (OpenSpatialException e) {
@@ -242,6 +250,14 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         //Matrix.rotateM(mModelCube, 0, 45, 0.0f, 0.0f, 1.0f);
     }
 
+    private void setCubeColor(float[] colors) {
+        ByteBuffer bbColors = ByteBuffer.allocateDirect(colors.length * 4);
+        bbColors.order(ByteOrder.nativeOrder());
+        mCubeColors = bbColors.asFloatBuffer();
+        mCubeColors.put(colors);
+        mCubeColors.position(0);
+    }
+
     /**
      * Creates the buffers we use to store information about the 3D world. OpenGL doesn't use Java
      * arrays, but rather needs data in a format it can understand. Hence we use ByteBuffers.
@@ -258,11 +274,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         mCubeVertices.put(DATA.CUBE_COORDS);
         mCubeVertices.position(0);
 
-        ByteBuffer bbColors = ByteBuffer.allocateDirect(DATA.CUBE_COLORS.length * 4);
-        bbColors.order(ByteOrder.nativeOrder());
-        mCubeColors = bbColors.asFloatBuffer();
-        mCubeColors.put(DATA.CUBE_COLORS);
-        mCubeColors.position(0);
+        setCubeColor(DATA.CUBE_COLORS);
 
         ByteBuffer bbNormals = ByteBuffer.allocateDirect(DATA.CUBE_NORMALS.length * 4);
         bbNormals.order(ByteOrder.nativeOrder());
