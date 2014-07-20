@@ -110,14 +110,14 @@ public class MainScreenActivity extends Activity {
 
                     Log.d(TAG, device.getName() + ": received ButtonEvent of type " + bEvent.buttonEventType);
 
-                    if (bEvent.buttonEventType == ButtonEvent.ButtonEventType.TOUCH2_DOWN) {
+                    if (bEvent.buttonEventType == ButtonEvent.ButtonEventType.TOUCH0_DOWN) {
                         mPointerService.updatePointerColor(device.getAddress(),
                                 Color.alpha(mRedColor),
                                 Color.red(mRedColor),
                                 Color.green(mRedColor),
                                 Color.blue(mRedColor));
                         mPointerService.updatePointerRadius(device.getAddress(), 2 * RADIUS);
-                    } else if (bEvent.buttonEventType == ButtonEvent.ButtonEventType.TOUCH2_UP) {
+                    } else if (bEvent.buttonEventType == ButtonEvent.ButtonEventType.TOUCH0_UP) {
                         mPointerService.updatePointerColor(device.getAddress(),
                                 Color.alpha(mWhiteColor),
                                 Color.red(mWhiteColor),
