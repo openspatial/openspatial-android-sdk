@@ -156,6 +156,8 @@ public class MainScreenActivity extends Activity {
             mOpenSpatialService.registerForGestureEvents(device, GestureEvent.GestureEventType.SWIPE_DOWN, gestureEventListener);
             mOpenSpatialService.registerForGestureEvents(device, GestureEvent.GestureEventType.SWIPE_LEFT, gestureEventListener);
             mOpenSpatialService.registerForGestureEvents(device, GestureEvent.GestureEventType.SWIPE_RIGHT, gestureEventListener);
+            mOpenSpatialService.registerForGestureEvents(device, GestureEvent.GestureEventType.CLOCKWISE_ROTATION, gestureEventListener);
+            mOpenSpatialService.registerForGestureEvents(device, GestureEvent.GestureEventType.COUNTERCLOCKWISE_ROTATION, gestureEventListener);
         } catch (OpenSpatialException e) {
             Log.e(TAG, "Error registering for GestureEvent " + e);
         }
