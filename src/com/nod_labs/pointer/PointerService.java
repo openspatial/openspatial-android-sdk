@@ -199,10 +199,10 @@ public class PointerService extends RoboService {
                 }
 
                 switch (event.buttonEventType) {
-                    case TOUCH2_DOWN:
+                    case TOUCH0_DOWN:
                         touch2Down = true;
                         break;
-                    case TOUCH2_UP:
+                    case TOUCH0_UP:
                         if (touch2Down) {
                             Log.d(TAG, "Sending click event for device " + pointerId);
                             if (cb != null) {
