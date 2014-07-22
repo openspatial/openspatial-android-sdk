@@ -64,8 +64,9 @@ public class OpenSpatialService extends Service {
     private final HashMap<BluetoothDevice,
             Map<GestureEvent.GestureEventType, OpenSpatialEvent.EventListener>> mGestureEventCallbacks =
             new HashMap<BluetoothDevice, Map<GestureEvent.GestureEventType, OpenSpatialEvent.EventListener>>();
-    private final Set<OpenSpatialServiceCallback> mDeviceListUpdateCallbacks =
-            new HashSet<OpenSpatialServiceCallback>();
+
+    private String mIdentifier;
+    private OpenSpatialServiceCallback mServiceCallback;
 
     private static final String TAG = OpenSpatialService.class.getSimpleName();
 
@@ -90,6 +91,23 @@ public class OpenSpatialService extends Service {
         }
 
         map.remove(device);
+    }
+
+    /**
+     * Initialize the library
+     *
+     * This call must be called before any other call is made
+     *
+     * @param identifier A unique identifier identifying the entity using this library. This is typically
+     *                   an Activity or a Fragment. A typical value for this parameter is the fully qualified
+     *                   class name
+     * @param cb         An instance of {@code OpenSpatialServiceCallback}. Any interesting events, such as
+     *                   new devices being connected, registration results etc. will be communicated via the
+     *                   respective methods in this class.
+     */
+    public void initialize(String identifier, OpenSpatialServiceCallback cb) {
+        mIdentifier = identifier;
+        mServiceCallback = cb;
     }
 
     /**
@@ -244,11 +262,14 @@ public class OpenSpatialService extends Service {
         }
     }
 
-    public void getConnectedDevices(final OpenSpatialServiceCallback cb) {
-        synchronized (mDeviceListUpdateCallbacks) {
-            mDeviceListUpdateCallbacks.add(cb);
-        }
-
+    /**
+     * Get a list of connected devices
+     *
+     * This call requests a list of connected devices. The result is communicated via the {@code deviceListUpdated}
+     * callback in the {@link net.openspatial.OpenSpatialService.OpenSpatialServiceCallback} instance registered in
+     * {@code initialize()}
+     */
+    public void getConnectedDevices() {
         IntentFilter filter = new IntentFilter();
         filter.addAction(OpenSpatialConstants.OPENSPATIAL_DEVICE_LIST_UPDATED_INTENT_ACTION);
         registerReceiver(mEventReceiver, filter);
@@ -318,15 +339,7 @@ public class OpenSpatialService extends Service {
             Log.d(TAG, "parceledDevices was null");
         }
         Log.d(TAG, "Num connected devices: " + connectedDevices.size());
-        synchronized (mDeviceListUpdateCallbacks) {
-            Log.d(TAG, "Calling callback");
-            for (OpenSpatialServiceCallback cb : mDeviceListUpdateCallbacks) {
-                cb.deviceListUpdated(connectedDevices);
-            }
-
-            // Clear the callbacks once updated
-            mDeviceListUpdateCallbacks.clear();
-        }
+        mServiceCallback.deviceListUpdated(connectedDevices);
     }
 
     public class OpenSpatialServiceBinder extends Binder {

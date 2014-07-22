@@ -33,7 +33,7 @@ import net.openspatial.*;
 import java.util.Set;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-public class MainScreenActivity extends Activity {
+public class MainScreenActivity extends Activity implements OpenSpatialService.OpenSpatialServiceCallback {
     OpenSpatialService mOpenSpatialService;
     PointerService mPointerService;
 
@@ -47,24 +47,8 @@ public class MainScreenActivity extends Activity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             mOpenSpatialService = ((OpenSpatialService.OpenSpatialServiceBinder)service).getService();
 
-            mOpenSpatialService.getConnectedDevices(new OpenSpatialService.OpenSpatialServiceCallback() {
-                @Override
-                public void deviceListUpdated(Set<BluetoothDevice> bluetoothDevices) {
-                    Log.d(TAG, "Num connected devices = " + bluetoothDevices.size());
-                    for (BluetoothDevice device : bluetoothDevices) {
-                        mPointerService.addPointer(device.getAddress(),
-                                RADIUS,
-                                Color.alpha(mWhiteColor),
-                                Color.red(mWhiteColor),
-                                Color.green(mWhiteColor),
-                                Color.blue(mWhiteColor),
-                                device.getName());
-
-                        Log.d(TAG, "Registering " + device.getName());
-                        registerForEvents(device);
-                    }
-                }
-            });
+            mOpenSpatialService.initialize(TAG, MainScreenActivity.this);
+            mOpenSpatialService.getConnectedDevices();
         }
 
         @Override
@@ -176,5 +160,22 @@ public class MainScreenActivity extends Activity {
 
         unbindService(mOpenSpatialServiceConnection);
         unbindService(mPointerServiceConnection);
+    }
+
+    @Override
+    public void deviceListUpdated(Set<BluetoothDevice> bluetoothDevices) {
+        Log.d(TAG, "Num connected devices = " + bluetoothDevices.size());
+        for (BluetoothDevice device : bluetoothDevices) {
+            mPointerService.addPointer(device.getAddress(),
+                    RADIUS,
+                    Color.alpha(mWhiteColor),
+                    Color.red(mWhiteColor),
+                    Color.green(mWhiteColor),
+                    Color.blue(mWhiteColor),
+                    device.getName());
+
+            Log.d(TAG, "Registering " + device.getName());
+            registerForEvents(device);
+        }
     }
 }
