@@ -27,6 +27,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 import com.nod_labs.pointer.PointerService;
 import net.openspatial.*;
 
@@ -136,12 +137,7 @@ public class MainScreenActivity extends Activity implements OpenSpatialService.O
         };
 
         try {
-            mOpenSpatialService.registerForGestureEvents(device, GestureEvent.GestureEventType.SWIPE_UP, gestureEventListener);
-            mOpenSpatialService.registerForGestureEvents(device, GestureEvent.GestureEventType.SWIPE_DOWN, gestureEventListener);
-            mOpenSpatialService.registerForGestureEvents(device, GestureEvent.GestureEventType.SWIPE_LEFT, gestureEventListener);
-            mOpenSpatialService.registerForGestureEvents(device, GestureEvent.GestureEventType.SWIPE_RIGHT, gestureEventListener);
-            mOpenSpatialService.registerForGestureEvents(device, GestureEvent.GestureEventType.CLOCKWISE_ROTATION, gestureEventListener);
-            mOpenSpatialService.registerForGestureEvents(device, GestureEvent.GestureEventType.COUNTERCLOCKWISE_ROTATION, gestureEventListener);
+            mOpenSpatialService.registerForGestureEvents(device, gestureEventListener);
         } catch (OpenSpatialException e) {
             Log.e(TAG, "Error registering for GestureEvent " + e);
         }
@@ -177,5 +173,25 @@ public class MainScreenActivity extends Activity implements OpenSpatialService.O
             Log.d(TAG, "Registering " + device.getName());
             registerForEvents(device);
         }
+    }
+
+    @Override
+    public void buttonEventRegistrationResult(BluetoothDevice device, int status) {
+        Toast.makeText(this, "ButtonEvent registration status: " + status, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void pointerEventRegistrationResult(BluetoothDevice device, int status) {
+        Toast.makeText(this, "PointerEvent registration status: " + status, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void pose6DEventRegistrationResult(BluetoothDevice device, int status) {
+        Toast.makeText(this, "Pose6DEvent registration status: " + status, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void gestureEventRegistrationResult(BluetoothDevice device, int status) {
+        Toast.makeText(this, "GestureEvent registration status: " + status, Toast.LENGTH_SHORT).show();
     }
 }

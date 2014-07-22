@@ -27,7 +27,31 @@ public class OpenSpatialConstants {
     public static final String BLUETOOTH_DEVICE = "net.openspatial.BLUETOOTH_DEVICE";
     public static final String OPENSPATIAL_EVENT = "net.openspatial.OPENSPATIAL_EVENT";
     public static final String CONNECTED_DEVICES = "net.openspatial.CONNECTED_DEVICES";
+    public static final String IDENTIFIER = "net.openspatial.IDENTIFIER";
+    public static final String STATUS = "net.openspatial.STATUS";
 
+    // Actions for intents sent by the service
+    public static final String OPENSPATIAL_LIST_DEVICES_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_LIST_DEVICES_INTENT_ACTION";
+    public static final String OPENSPATIAL_REGISTER_BUTTON_EVENT_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_REGISTER_BUTTON_EVENT_INTENT_ACTION";
+    public static final String OPENSPATIAL_REGISTER_POINTER_EVENT_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_REGISTER_POINTER_EVENT_INTENT_ACTION";
+    public static final String OPENSPATIAL_REGISTER_GESTURE_EVENT_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_REGISTER_GESTURE_EVENT_INTENT_ACTION";
+    public static final String OPENSPATIAL_REGISTER_POSE6D_EVENT_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_REGISTER_POSE6D_EVENT_INTENT_ACTION";
+
+    public static final String OPENSPATIAL_UNREGISTER_BUTTON_EVENT_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_UNREGISTER_BUTTON_EVENT_INTENT_ACTION";
+    public static final String OPENSPATIAL_UNREGISTER_POINTER_EVENT_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_UNREGISTER_POINTER_EVENT_INTENT_ACTION";
+    public static final String OPENSPATIAL_UNREGISTER_GESTURE_EVENT_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_UNREGISTER_GESTURE_EVENT_INTENT_ACTION";
+    public static final String OPENSPATIAL_UNREGISTER_POSE6D_EVENT_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_UNREGISTER_POSE6D_EVENT_INTENT_ACTION";
+
+    // Actions for events received by the service
     public static final String OPENSPATIAL_BUTTON_EVENT_INTENT_ACTION =
             "net.openspatial.OPENSPATIAL_BUTTON_EVENT_INTENT_ACTION";
     public static final String OPENSPATIAL_POINTER_EVENT_INTENT_ACTION =
@@ -36,8 +60,16 @@ public class OpenSpatialConstants {
             "net.openspatial.OPENSPATIAL_POSE6D_EVENT_INTENT_ACTION";
     public static final String OPENSPATIAL_GESTURE_EVENT_INTENT_ACTION =
             "net.openspatial.OPENSPATIAL_GESTURE_EVENT_INTENT_ACTION";
-    public static final String OPENSPATIAL_LIST_DEVICES_INTENT_ACTION =
-            "net.openspatial.OPENSPATIAL_LIST_DEVICES_INTENT_ACTION";
     public static final String OPENSPATIAL_DEVICE_LIST_UPDATED_INTENT_ACTION =
             "net.openspatial.OPENSPATIAL_DEVICE_LIST_UPDATED_INTENT_ACTION";
+
+    public static final String OPENSPATIAL_REGISTER_BUTTON_EVENT_RESULT =
+            "net.openspatial.OPENSPATIAL_REGISTER_BUTTON_EVENT_RESULT";
+    public static final String OPENSPATIAL_REGISTER_POINTER_EVENT_RESULT =
+            "net.openspatial.OPENSPATIAL_REGISTER_POINTER_EVENT_RESULT";
+    public static final String OPENSPATIAL_REGISTER_GESTURE_EVENT_RESULT =
+            "net.openspatial.OPENSPATIAL_REGISTER_GESTURE_EVENT_RESULT";
+    public static final String OPENSPATIAL_REGISTER_POSE6D_EVENT_RESULT =
+            "net.openspatial.OPENSPATIAL_REGISTER_POSE6D_EVENT_RESULT";
+
 }

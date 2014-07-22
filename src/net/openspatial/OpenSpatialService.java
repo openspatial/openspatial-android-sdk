@@ -53,6 +53,51 @@ public class OpenSpatialService extends Service {
         }
     };
 
+    private final BroadcastReceiver mResultReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (mServiceCallback == null) {
+                Log.e(TAG, "No callback interface registered");
+                return;
+            }
+
+            String action = intent.getAction();
+            if (action == null) {
+                Log.e(TAG, "Got null action");
+                return;
+            }
+
+            String identifier = intent.getStringExtra(OpenSpatialConstants.IDENTIFIER);
+            if (identifier == null || !identifier.equals(mIdentifier)) {
+                return;
+            }
+
+            BluetoothDevice device = intent.getParcelableExtra(OpenSpatialConstants.BLUETOOTH_DEVICE);
+            if (device == null) {
+                Log.e(TAG, "Device not set in result");
+                return;
+            }
+
+            int status = intent.getIntExtra(OpenSpatialConstants.STATUS, -1);
+            if (status == -1) {
+                Log.e(TAG, "Status not set in result");
+                return;
+            }
+
+            if (action.equals(OpenSpatialConstants.OPENSPATIAL_REGISTER_BUTTON_EVENT_RESULT)) {
+                mServiceCallback.buttonEventRegistrationResult(device, status);
+            } else if (action.equals(OpenSpatialConstants.OPENSPATIAL_REGISTER_POINTER_EVENT_RESULT)) {
+                mServiceCallback.pointerEventRegistrationResult(device, status);
+            } else if (action.equals(OpenSpatialConstants.OPENSPATIAL_REGISTER_GESTURE_EVENT_RESULT)) {
+                mServiceCallback.gestureEventRegistrationResult(device, status);
+            } else if (action.equals(OpenSpatialConstants.OPENSPATIAL_REGISTER_POSE6D_EVENT_RESULT)) {
+                mServiceCallback.pose6DEventRegistrationResult(device, status);
+            } else {
+                Log.e(TAG, "Got unknown action: " + action);
+            }
+        }
+    };
+
     private final OpenSpatialServiceBinder mBinder = new OpenSpatialServiceBinder();
 
     private final HashMap<BluetoothDevice, OpenSpatialEvent.EventListener> mPointerEventCallbacks =
@@ -61,9 +106,8 @@ public class OpenSpatialService extends Service {
             new HashMap<BluetoothDevice, OpenSpatialEvent.EventListener>();
     private final HashMap<BluetoothDevice, OpenSpatialEvent.EventListener> m3DRotationEventCallbacks =
             new HashMap<BluetoothDevice, OpenSpatialEvent.EventListener>();
-    private final HashMap<BluetoothDevice,
-            Map<GestureEvent.GestureEventType, OpenSpatialEvent.EventListener>> mGestureEventCallbacks =
-            new HashMap<BluetoothDevice, Map<GestureEvent.GestureEventType, OpenSpatialEvent.EventListener>>();
+    private final HashMap<BluetoothDevice,OpenSpatialEvent.EventListener> mGestureEventCallbacks =
+            new HashMap<BluetoothDevice, OpenSpatialEvent.EventListener>();
 
     private String mIdentifier;
     private OpenSpatialServiceCallback mServiceCallback;
@@ -80,6 +124,14 @@ public class OpenSpatialService extends Service {
         }
 
         map.put(device, listener);
+    }
+
+    private void sendIntent(BluetoothDevice device, String action) {
+        Intent intent = new Intent(action);
+        intent.putExtra(OpenSpatialConstants.BLUETOOTH_DEVICE, device);
+        intent.putExtra(OpenSpatialConstants.IDENTIFIER, mIdentifier);
+
+        sendBroadcast(intent);
     }
 
     // Must *ONLY* be called when map is synchronized
@@ -108,6 +160,19 @@ public class OpenSpatialService extends Service {
     public void initialize(String identifier, OpenSpatialServiceCallback cb) {
         mIdentifier = identifier;
         mServiceCallback = cb;
+
+        // Register for registration event results
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(OpenSpatialConstants.OPENSPATIAL_REGISTER_BUTTON_EVENT_RESULT);
+        filter.addAction(OpenSpatialConstants.OPENSPATIAL_REGISTER_GESTURE_EVENT_RESULT);
+        filter.addAction(OpenSpatialConstants.OPENSPATIAL_REGISTER_POINTER_EVENT_RESULT);
+        filter.addAction(OpenSpatialConstants.OPENSPATIAL_REGISTER_POSE6D_EVENT_RESULT);
+        registerReceiver(mResultReceiver, filter);
+
+        IntentFilter connectedDevicesfilter = new IntentFilter();
+        connectedDevicesfilter.addAction(OpenSpatialConstants.OPENSPATIAL_DEVICE_LIST_UPDATED_INTENT_ACTION);
+        registerReceiver(mEventReceiver, connectedDevicesfilter);
+
     }
 
     /**
@@ -127,6 +192,8 @@ public class OpenSpatialService extends Service {
 
         IntentFilter filter = new IntentFilter(OpenSpatialConstants.OPENSPATIAL_BUTTON_EVENT_INTENT_ACTION);
         registerReceiver(mEventReceiver, filter);
+
+        sendIntent(device, OpenSpatialConstants.OPENSPATIAL_REGISTER_BUTTON_EVENT_INTENT_ACTION);
     }
 
     /**
@@ -146,6 +213,8 @@ public class OpenSpatialService extends Service {
 
         IntentFilter filter = new IntentFilter(OpenSpatialConstants.OPENSPATIAL_POINTER_EVENT_INTENT_ACTION);
         registerReceiver(mEventReceiver, filter);
+
+        sendIntent(device, OpenSpatialConstants.OPENSPATIAL_REGISTER_POINTER_EVENT_INTENT_ACTION);
     }
 
     /**
@@ -165,35 +234,31 @@ public class OpenSpatialService extends Service {
 
         IntentFilter filter = new IntentFilter(OpenSpatialConstants.OPENSPATIAL_POSE6D_EVENT_INTENT_ACTION);
         registerReceiver(mEventReceiver, filter);
+
+        sendIntent(device, OpenSpatialConstants.OPENSPATIAL_REGISTER_POSE6D_EVENT_INTENT_ACTION);
     }
 
     /**
      * Register for {@link net.openspatial.GestureEvent}s for the given device
      * @param device The device to listen for {@code GestureEvent}s from. This is an instance of
      *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
-     * @param type The type of Gesture. This is a value of type {@link net.openspatial.GestureEvent.GestureEventType}
      * @param listener An instance of {@link net.openspatial.OpenSpatialEvent.EventListener}. When an
      *                 {@link net.openspatial.OpenSpatialEvent} is received, the {@code onEventReceived} method is
      *                 called
      */
     public void registerForGestureEvents(BluetoothDevice device,
-                GestureEvent.GestureEventType type,
                 OpenSpatialEvent.EventListener listener)
             throws OpenSpatialException {
         Map<GestureEvent.GestureEventType, OpenSpatialEvent.EventListener> listenerMap;
 
         synchronized (mGestureEventCallbacks) {
-            listenerMap = mGestureEventCallbacks.get(device);
-
-            if (listenerMap == null) {
-                listenerMap = new HashMap<GestureEvent.GestureEventType, OpenSpatialEvent.EventListener>();
-                mGestureEventCallbacks.put(device, listenerMap);
-            }
-            listenerMap.put(type, listener);
+            registerCallback(mGestureEventCallbacks, device, listener);
         }
 
         IntentFilter filter = new IntentFilter(OpenSpatialConstants.OPENSPATIAL_GESTURE_EVENT_INTENT_ACTION);
         registerReceiver(mEventReceiver, filter);
+
+        sendIntent(device, OpenSpatialConstants.OPENSPATIAL_REGISTER_GESTURE_EVENT_INTENT_ACTION);
     }
 
     /**
@@ -203,6 +268,8 @@ public class OpenSpatialService extends Service {
      *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
      */
     public void unRegisterForButtonEvents(BluetoothDevice device) throws OpenSpatialException {
+        sendIntent(device, OpenSpatialConstants.OPENSPATIAL_UNREGISTER_BUTTON_EVENT_INTENT_ACTION);
+
         synchronized (mButtonEventCallbacks) {
             unRegisterCallback(mButtonEventCallbacks, device);
         }
@@ -215,6 +282,8 @@ public class OpenSpatialService extends Service {
      *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
      */
     public void unRegisterForPointerEvents(BluetoothDevice device) throws OpenSpatialException {
+        sendIntent(device, OpenSpatialConstants.OPENSPATIAL_UNREGISTER_POINTER_EVENT_INTENT_ACTION);
+
         synchronized (mPointerEventCallbacks) {
             unRegisterCallback(mPointerEventCallbacks, device);
         }
@@ -227,6 +296,8 @@ public class OpenSpatialService extends Service {
      *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
      */
     public void unRegisterForPose6DEvents(BluetoothDevice device) throws OpenSpatialException {
+        sendIntent(device, OpenSpatialConstants.OPENSPATIAL_UNREGISTER_POSE6D_EVENT_INTENT_ACTION);
+
         synchronized (m3DRotationEventCallbacks) {
             unRegisterCallback(m3DRotationEventCallbacks, device);
         }
@@ -237,28 +308,14 @@ public class OpenSpatialService extends Service {
      * @param device The device to stop listening for {@code GestureEvent}s from. This is an instance of
      *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
      *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
-     * @param type   The type of {@link net.openspatial.GestureEvent.GestureEventType} to stop listening for
      * @throws OpenSpatialException
      */
-    public void unRegisterForGestureEvents(BluetoothDevice device, GestureEvent.GestureEventType type)
+    public void unRegisterForGestureEvents(BluetoothDevice device)
             throws OpenSpatialException {
+        sendIntent(device, OpenSpatialConstants.OPENSPATIAL_UNREGISTER_GESTURE_EVENT_INTENT_ACTION);
+
         synchronized (mGestureEventCallbacks) {
-            Map<GestureEvent.GestureEventType, OpenSpatialEvent.EventListener> listenerMap =
-                    mGestureEventCallbacks.get(device);
-
-            if (listenerMap == null) {
-                throw new OpenSpatialException(OpenSpatialException.ErrorCode.DEVICE_NOT_REGISTERED,
-                        "Bluetooth device " + device.getName() + " (" + device.getAddress() +
-                        ") is not registered for any GestureEvents");
-            }
-
-            if (listenerMap.get(type) == null) {
-                throw new OpenSpatialException(OpenSpatialException.ErrorCode.DEVICE_NOT_REGISTERED,
-                        "Bluetooth device " + device.getName() + " (" + device.getAddress() +
-                        ") is not registered for GestureEvent type " + type);
-            }
-
-            listenerMap.remove(type);
+            unRegisterCallback(mGestureEventCallbacks, device);
         }
     }
 
@@ -270,13 +327,7 @@ public class OpenSpatialService extends Service {
      * {@code initialize()}
      */
     public void getConnectedDevices() {
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(OpenSpatialConstants.OPENSPATIAL_DEVICE_LIST_UPDATED_INTENT_ACTION);
-        registerReceiver(mEventReceiver, filter);
-
-        Intent intent = new Intent();
-        intent.setAction(OpenSpatialConstants.OPENSPATIAL_LIST_DEVICES_INTENT_ACTION);
-        sendBroadcast(intent);
+        sendIntent(null, OpenSpatialConstants.OPENSPATIAL_LIST_DEVICES_INTENT_ACTION);
     }
 
     // Package private because it is used in tests
@@ -305,12 +356,7 @@ public class OpenSpatialService extends Service {
                 case EVENT_GESTURE:
                     GestureEvent gEvent = (GestureEvent)event;
                     synchronized (mGestureEventCallbacks) {
-                        Map<GestureEvent.GestureEventType, OpenSpatialEvent.EventListener> listenerMap =
-                                mGestureEventCallbacks.get(device);
-
-                        if (listenerMap != null) {
-                            listener = listenerMap.get(gEvent.gestureEventType);
-                        }
+                        listener = mGestureEventCallbacks.get(device);
                     }
                     break;
                 default:
@@ -369,9 +415,14 @@ public class OpenSpatialService extends Service {
     public void onDestroy() {
         super.onDestroy();
         unregisterReceiver(mEventReceiver);
+        unregisterReceiver(mResultReceiver);
     }
 
     public interface OpenSpatialServiceCallback {
         public void deviceListUpdated(Set<BluetoothDevice> devices);
+        public void buttonEventRegistrationResult(BluetoothDevice device, int status);
+        public void pointerEventRegistrationResult(BluetoothDevice device, int status);
+        public void pose6DEventRegistrationResult(BluetoothDevice device, int status);
+        public void gestureEventRegistrationResult(BluetoothDevice device, int status);
     }
 }
