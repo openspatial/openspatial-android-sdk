@@ -159,20 +159,18 @@ public class MainScreenActivity extends Activity implements OpenSpatialService.O
     }
 
     @Override
-    public void deviceListUpdated(Set<BluetoothDevice> bluetoothDevices) {
-        Log.d(TAG, "Num connected devices = " + bluetoothDevices.size());
-        for (BluetoothDevice device : bluetoothDevices) {
-            mPointerService.addPointer(device.getAddress(),
-                    RADIUS,
-                    Color.alpha(mWhiteColor),
-                    Color.red(mWhiteColor),
-                    Color.green(mWhiteColor),
-                    Color.blue(mWhiteColor),
-                    device.getName());
+    public void deviceConnected(BluetoothDevice device) {
+        Log.d(TAG, device.getName() + " connected");
+        mPointerService.addPointer(device.getAddress(),
+                RADIUS,
+                Color.alpha(mWhiteColor),
+                Color.red(mWhiteColor),
+                Color.green(mWhiteColor),
+                Color.blue(mWhiteColor),
+                device.getName());
 
-            Log.d(TAG, "Registering " + device.getName());
-            registerForEvents(device);
-        }
+        Log.d(TAG, "Registering " + device.getName());
+        registerForEvents(device);
     }
 
     @Override

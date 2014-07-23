@@ -44,9 +44,16 @@ public class OpenSpatialService extends Service {
     private final BroadcastReceiver mEventReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(OpenSpatialConstants.OPENSPATIAL_DEVICE_LIST_UPDATED_INTENT_ACTION)) {
-                Log.d(TAG, "Got device list updated event");
-                processDeviceListUpdatedIntent(intent);
+            String action = intent.getAction();
+
+            if (action == null) {
+                Log.e(TAG, "Got null action");
+                return;
+            }
+
+            if (action.equals(OpenSpatialConstants.OPENSPATIAL_DEVICE_CONNECTED_INTENT_ACTION)) {
+                Log.d(TAG, "Got device connected event");
+                processDeviceConnectedIntent(intent);
             } else {
                 processEventIntent(intent);
             }
@@ -170,7 +177,7 @@ public class OpenSpatialService extends Service {
         registerReceiver(mResultReceiver, filter);
 
         IntentFilter connectedDevicesfilter = new IntentFilter();
-        connectedDevicesfilter.addAction(OpenSpatialConstants.OPENSPATIAL_DEVICE_LIST_UPDATED_INTENT_ACTION);
+        connectedDevicesfilter.addAction(OpenSpatialConstants.OPENSPATIAL_DEVICE_CONNECTED_INTENT_ACTION);
         registerReceiver(mEventReceiver, connectedDevicesfilter);
 
     }
@@ -374,18 +381,14 @@ public class OpenSpatialService extends Service {
         }
     }
 
-    private void processDeviceListUpdatedIntent(Intent intent) {
-        Parcelable[] parceledDevices = intent.getParcelableArrayExtra(OpenSpatialConstants.CONNECTED_DEVICES);
-        Set<BluetoothDevice> connectedDevices = new HashSet<BluetoothDevice>();
-        if (parceledDevices != null) {
-            for (Parcelable p : parceledDevices) {
-                connectedDevices.add((BluetoothDevice)p);
-            }
-        } else {
-            Log.d(TAG, "parceledDevices was null");
+    private void processDeviceConnectedIntent(Intent intent) {
+        BluetoothDevice device = intent.getParcelableExtra(OpenSpatialConstants.BLUETOOTH_DEVICE);
+        if (device == null) {
+            Log.e(TAG, "Got device connected intent with no device");
+            return;
         }
-        Log.d(TAG, "Num connected devices: " + connectedDevices.size());
-        mServiceCallback.deviceListUpdated(connectedDevices);
+
+        mServiceCallback.deviceConnected(device);
     }
 
     public class OpenSpatialServiceBinder extends Binder {
@@ -419,7 +422,7 @@ public class OpenSpatialService extends Service {
     }
 
     public interface OpenSpatialServiceCallback {
-        public void deviceListUpdated(Set<BluetoothDevice> devices);
+        public void deviceConnected(BluetoothDevice device);
         public void buttonEventRegistrationResult(BluetoothDevice device, int status);
         public void pointerEventRegistrationResult(BluetoothDevice device, int status);
         public void pose6DEventRegistrationResult(BluetoothDevice device, int status);
