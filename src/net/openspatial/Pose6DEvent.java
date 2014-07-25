@@ -16,6 +16,7 @@
 
 package net.openspatial;
 
+import android.bluetooth.BluetoothDevice;
 import android.os.Parcel;
 
 /**
@@ -65,8 +66,8 @@ public class Pose6DEvent extends OpenSpatialEvent {
     /**
      * Construct a Pose6DEvent based on x, y, z, roll, pitch, yaw
      */
-    public Pose6DEvent(int x, int y, int z, float roll, float pitch, float yaw) {
-        super(EventType.EVENT_POSE6D);
+    public Pose6DEvent(BluetoothDevice device, int x, int y, int z, float roll, float pitch, float yaw) {
+        super(device, EventType.EVENT_POSE6D);
 
         this.x = x;
         this.y = y;

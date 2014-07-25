@@ -340,30 +340,29 @@ public class OpenSpatialService extends Service {
     // Package private because it is used in tests
     void processEventIntent(Intent i) {
         OpenSpatialEvent event = i.getParcelableExtra(OpenSpatialConstants.OPENSPATIAL_EVENT);
-        BluetoothDevice device = i.getParcelableExtra(OpenSpatialConstants.BLUETOOTH_DEVICE);
 
         if (event != null) {
             OpenSpatialEvent.EventListener listener = null;
             switch (event.eventType) {
                 case EVENT_BUTTON:
                     synchronized (mButtonEventCallbacks) {
-                        listener = mButtonEventCallbacks.get(device);
+                        listener = mButtonEventCallbacks.get(event.device);
                     }
                     break;
                 case EVENT_POINTER:
                     synchronized (mPointerEventCallbacks) {
-                        listener = mPointerEventCallbacks.get(device);
+                        listener = mPointerEventCallbacks.get(event.device);
                     }
                     break;
                 case EVENT_POSE6D:
                     synchronized (m3DRotationEventCallbacks) {
-                        listener = m3DRotationEventCallbacks.get(device);
+                        listener = m3DRotationEventCallbacks.get(event.device);
                     }
                     break;
                 case EVENT_GESTURE:
                     GestureEvent gEvent = (GestureEvent)event;
                     synchronized (mGestureEventCallbacks) {
-                        listener = mGestureEventCallbacks.get(device);
+                        listener = mGestureEventCallbacks.get(event.device);
                     }
                     break;
                 default:
@@ -372,7 +371,7 @@ public class OpenSpatialService extends Service {
 
             if (listener == null) {
                 Log.e(TAG, "No listener registered for event type " +
-                        event.eventType + " on device " + device);
+                        event.eventType + " on device " + event.device);
             } else {
                 listener.onEventReceived(event);
             }

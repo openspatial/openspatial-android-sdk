@@ -16,6 +16,7 @@
 
 package net.openspatial;
 
+import android.bluetooth.BluetoothDevice;
 import android.os.Parcel;
 
 /**
@@ -89,8 +90,8 @@ public class ButtonEvent extends OpenSpatialEvent {
      * Create a new {@code ButtonEvent} of the specified type
      * @param type Type of the {@code ButtonEvent}
      */
-    public ButtonEvent(ButtonEventType type) {
-        super(EventType.EVENT_BUTTON);
+    public ButtonEvent(BluetoothDevice device, ButtonEventType type) {
+        super(device, EventType.EVENT_BUTTON);
         buttonEventType = type;
     }
 

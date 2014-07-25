@@ -16,6 +16,7 @@
 
 package net.openspatial;
 
+import android.bluetooth.BluetoothDevice;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -63,6 +64,11 @@ abstract public class OpenSpatialEvent implements Parcelable {
     public long timestamp;
 
     /**
+     * Bluetooth device that sent the event
+     */
+    public BluetoothDevice device;
+
+    /**
      * A listener interface for clients interested in {@link net.openspatial.OpenSpatialEvent}s
      */
     public interface EventListener {
@@ -79,7 +85,8 @@ abstract public class OpenSpatialEvent implements Parcelable {
      * Create an {@code OpenSpatialEvent} with a given type
      * @param type The type of the event
      */
-    public OpenSpatialEvent(EventType type) {
+    public OpenSpatialEvent(BluetoothDevice bDevice, EventType type) {
+        device = bDevice;
         eventType = type;
         timestamp = System.currentTimeMillis();
     }
@@ -88,10 +95,12 @@ abstract public class OpenSpatialEvent implements Parcelable {
     public void writeToParcel(Parcel out, int flags) {
         out.writeSerializable(eventType);
         out.writeLong(timestamp);
+        out.writeParcelable(device, flags);
     }
 
     protected OpenSpatialEvent(Parcel in) {
         this.eventType = (EventType)in.readSerializable();
         this.timestamp = in.readLong();
+        this.device = (BluetoothDevice)in.readParcelable(BluetoothDevice.class.getClassLoader());
     }
 }

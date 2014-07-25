@@ -4,6 +4,7 @@
 
 package net.openspatial;
 
+import android.bluetooth.BluetoothDevice;
 import android.os.Parcel;
 
 /**
@@ -74,8 +75,8 @@ public class GestureEvent extends OpenSpatialEvent {
      * @param type The type of the Gesture as defined by {@code GestureEventType}
      * @param magnitude The magnitude of the Gesture
      */
-    public GestureEvent(GestureEventType type, double magnitude) {
-        super(EventType.EVENT_GESTURE);
+    public GestureEvent(BluetoothDevice device, GestureEventType type, double magnitude) {
+        super(device, EventType.EVENT_GESTURE);
 
         this.gestureEventType = type;
         this.magnitude = magnitude;

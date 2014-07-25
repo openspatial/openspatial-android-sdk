@@ -16,6 +16,7 @@
 
 package net.openspatial;
 
+import android.bluetooth.BluetoothDevice;
 import android.os.Parcel;
 
 /**
@@ -62,8 +63,8 @@ public class PointerEvent extends OpenSpatialEvent {
      * @param x The x value
      * @param y The y value
      */
-    public PointerEvent(PointerEventType type, int x, int y) {
-        super(EventType.EVENT_POINTER);
+    public PointerEvent(BluetoothDevice device, PointerEventType type, int x, int y) {
+        super(device, EventType.EVENT_POINTER);
 
         this.pointerEventType = type;
         this.x = x;
