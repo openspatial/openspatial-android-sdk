@@ -1,5 +1,6 @@
 [alias]
     example = //apps/OpenSpatialExample:OpenSpatialExample
+    openspatial = //src/net/openspatial:OpenSpatialSDK
 
 [java]
     src_roots = /src, /tests
