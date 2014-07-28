@@ -16,6 +16,8 @@
 
 package net.openspatial;
 
+import android.bluetooth.BluetoothDevice;
+
 public class OpenSpatialConstants {
     public static final String OPENSPATIAL_SERVICE_UUID = "00000002-0000-1000-8000-a0e5e9000000";
 
@@ -23,6 +25,8 @@ public class OpenSpatialConstants {
     public static final String OPENSPATIAL_POSITION_2D_CHARACTERISTIC = "00000206-0000-1000-8000-A0E5E9000000";
     public static final String OPENSPATIAL_BUTTONSTATE_CHARACTERISTIC = "00000207-0000-1000-8000-A0E5E9000000";
     public static final String OPENSPATIAL_GESTURE_CHARACTERISTIC = "00000208-0000-1000-8000-A0E5E9000000";
+
+    public static final BluetoothDevice EMULATOR_DEVICE = null;
 
     public static final String BLUETOOTH_DEVICE = "net.openspatial.BLUETOOTH_DEVICE";
     public static final String OPENSPATIAL_EVENT = "net.openspatial.OPENSPATIAL_EVENT";
