@@ -1,0 +1,9 @@
+# view AndroidManifest.xml #generated:14
+-keep class com.example.cardboard.MainActivity { <init>(...); }
+
+# view res/layout/common_ui.xml #generated:9
+-keep class com.google.vrtoolkit.cardboard.CardboardView { <init>(...); }
+
+# view AndroidManifest.xml #generated:23
+-keep class net.openspatial.OpenSpatialService { <init>(...); }
+
