@@ -13,7 +13,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
-public class ObjectModel {
+public class Sprite {
     private int mResId;
     private Context mContext;
 
@@ -23,11 +23,19 @@ public class ObjectModel {
     Mesh mMesh;
 
     private float[] mColor;
+    private float[] mModelMatrix;
+    private float mMinX;
+    private float mMaxX;
+    private float mMinY;
+    private float mMaxY;
+    private float mMinZ;
+    private float mMaxZ;
+
     private final ObjLoader mObjLoader = new ObjLoader();
 
     private static final String TAG = "ChessExample";
 
-    ObjectModel(Context context, int resId) {
+    Sprite(Context context, int resId) {
         mContext = context;
         mResId = resId;
 
@@ -36,6 +44,8 @@ public class ObjectModel {
         mColor[1] = 0.5f;
         mColor[2] = 0.5f;
         mColor[3] = 1.0f;
+
+        mModelMatrix = new float[16];
     }
 
     private Model loadModelFromResource(int resId) {
@@ -78,7 +88,27 @@ public class ObjectModel {
             int[] normalIndices = mMesh.getFaceNormals(i);
 
             for (int j = 0; j < 3; ++j) {
-                mObjectVertices.put(mMesh.getVertexf(vertexIndices[j]));
+                float[] vertex = mMesh.getVertexf(vertexIndices[j]);
+                if (i != 0) {
+                    mMinX = Math.min(mMinX, vertex[0]);
+                    mMaxX = Math.max(mMaxX, vertex[0]);
+
+                    mMinY = Math.min(mMinY, vertex[1]);
+                    mMaxY = Math.max(mMaxY, vertex[1]);
+
+                    mMinZ = Math.min(mMinZ, vertex[2]);
+                    mMaxZ = Math.max(mMaxZ, vertex[2]);
+                } else {
+                    mMinX = vertex[0];
+                    mMinY = vertex[1];
+                    mMinZ = vertex[2];
+
+                    mMaxX = vertex[0];
+                    mMaxY = vertex[1];
+                    mMaxZ = vertex[2];
+                }
+
+                mObjectVertices.put(vertex);
                 mObjectNormals.put(mMesh.getNormalf(normalIndices[j]));
                 mObjectColors.put(mColor);
             }
@@ -102,5 +132,33 @@ public class ObjectModel {
 
     int getNumFaces() {
         return mMesh.getFaceCount();
+    }
+
+    float getMinX() {
+        return mMinX;
+    }
+
+    float getMaxX() {
+        return mMaxX;
+    }
+
+    float getMinY() {
+        return mMinY;
+    }
+
+    float getMaxY() {
+        return mMaxY;
+    }
+
+    float getMinZ() {
+        return mMinZ;
+    }
+
+    float getMaxZ() {
+        return mMaxZ;
+    }
+
+    float[] getModelMatrix() {
+        return mModelMatrix;
     }
 }

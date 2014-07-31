@@ -45,10 +45,9 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private final float[] mLightPosInEyeSpace = new float[4];
 
     private static final int COORDS_PER_VERTEX = 3;
-    private static float DISPLACEMENT_PER_SQUARE = 0.2f;
-    private static float MIN_Z_DISPLACEMENT = -2f;
-    private static float MIN_X_DISPLACEMENT = -((Board.SIZE + 1) * DISPLACEMENT_PER_SQUARE) / 2;
-    private static float MIN_Y_DISPLACEMENT = -1.0f;
+    private static float MIN_Z_DISPLACEMENT = -1f;
+    private static float FLOOR_DEPTH = -1.0f;
+    private static float HAND_DEPTH = -1.0f;
 
     private int mGlProgram;
     private int mPositionParam;
@@ -59,7 +58,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private int mModelViewParam;
     private int mModelParam;
 
-    private float[] mModelCube;
+    //private float[] mModelCube;
     private float[] mCamera;
     private float[] mView;
     private float[] mHeadView;
@@ -70,8 +69,10 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private float[] mModelFloor;
 
     private Board mBoard;
-    private final Map<Constants.PieceType, ObjectModel> mBlackPieces = new HashMap<Constants.PieceType, ObjectModel>();
-    private final Map<Constants.PieceType, ObjectModel> mWhitePieces = new HashMap<Constants.PieceType, ObjectModel>();
+    private final Map<Constants.PieceType, Sprite> mBlackPieces = new HashMap<Constants.PieceType, Sprite>();
+    private final Map<Constants.PieceType, Sprite> mWhitePieces = new HashMap<Constants.PieceType, Sprite>();
+    private Sprite mHand;
+    private Sprite mTile;
 
     /**
      * Converts a raw text file, saved as a resource, into an OpenGL ES shader
@@ -117,16 +118,27 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
     private void loadPieces() {
         for (Constants.PieceType piece : Constants.PieceType.values()) {
-            ObjectModel whiteModel = new ObjectModel(this, Constants.getResourceIdForPiece(piece));
+            Sprite whiteModel = new Sprite(this, Constants.getResourceIdForPiece(piece));
             whiteModel.setColor(Constants.getPieceColor(Constants.PieceColor.WHITE));
             whiteModel.load();
             mWhitePieces.put(piece, whiteModel);
 
-            ObjectModel blackModel = new ObjectModel(this, Constants.getResourceIdForPiece(piece));
+            Sprite blackModel = new Sprite(this, Constants.getResourceIdForPiece(piece));
             blackModel.setColor(Constants.getPieceColor(Constants.PieceColor.BLACK));
             blackModel.load();
             mBlackPieces.put(piece, blackModel);
         }
+
+        mHand = new Sprite(this, R.raw.hand_withtexture);
+        float[] color = {0.4f, 0.4f, 0.4f, 1.0f};
+        mHand.setColor(color);
+        mHand.load();
+
+        mTile = new Sprite(this, R.raw.tile);
+        float[] red = {0.5f, 0, 0, 1.0f};
+        mTile.setColor(red);
+
+        mTile.load();
     }
 
     /**
@@ -143,7 +155,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         cardboardView.setRenderer(this);
         setCardboardView(cardboardView);
 
-        mModelCube = new float[16];
+        //mModelCube = new float[16];
         mCamera = new float[16];
         mView = new float[16];
         mModelViewProjection = new float[16];
@@ -264,6 +276,10 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
         mPerspective = transform.getPerspective();
         drawBoard();
+
+        Matrix.setIdentityM(mHand.getModelMatrix(), 0);
+        Matrix.translateM(mHand.getModelMatrix(), 0, 0, HAND_DEPTH, MIN_Z_DISPLACEMENT * 2);
+        drawObject(mHand);
     }
 
     @Override
@@ -274,58 +290,63 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
      * Draw the cube. We've set all of our transformation matrices. Now we simply pass them into
      * the shader.
      */
-    public void drawObject(ObjectModel objectModel) {
+    public void drawObject(Sprite sprite) {
+        float[] modelMatrix = sprite.getModelMatrix();
+
         // Set the Model in the shader, used to calculate lighting
-        GLES20.glUniformMatrix4fv(mModelParam, 1, false, mModelCube, 0);
+        GLES20.glUniformMatrix4fv(mModelParam, 1, false, modelMatrix, 0);
 
         // Set the ModelView in the shader, used to calculate lighting
         GLES20.glUniformMatrix4fv(mModelViewParam, 1, false, mModelView, 0);
 
         // Build the ModelView and ModelViewProjection matrices
         // for calculating cube position and light.
-        Matrix.multiplyMM(mModelView, 0, mView, 0, mModelCube, 0);
+        Matrix.multiplyMM(mModelView, 0, mView, 0, modelMatrix, 0);
         Matrix.multiplyMM(mModelViewProjection, 0, mPerspective, 0, mModelView, 0);
 
         // Set the position of the cube
         GLES20.glVertexAttribPointer(mPositionParam, COORDS_PER_VERTEX, GLES20.GL_FLOAT,
-                false, 0, objectModel.getVertices());
+                false, 0, sprite.getVertices());
 
         // Set the ModelViewProjection matrix in the shader.
         GLES20.glUniformMatrix4fv(mModelViewProjectionParam, 1, false, mModelViewProjection, 0);
 
         // Set the normal positions of the cube, again for shading
         GLES20.glVertexAttribPointer(mNormalParam, 3, GLES20.GL_FLOAT,
-                false, 0, objectModel.getNormals());
+                false, 0, sprite.getNormals());
 
         GLES20.glVertexAttribPointer(mColorParam, 4, GLES20.GL_FLOAT, false,
-                0, objectModel.getColors());
+                0, sprite.getColors());
 
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, objectModel.getNumFaces() * 3);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, sprite.getNumFaces() * 3);
         checkGLError("Drawing cube");
     }
 
-    private float getZTranslation(int row) {
-        return MIN_Z_DISPLACEMENT - row * DISPLACEMENT_PER_SQUARE;
-    }
-
-    private float getXTranslation(int col) {
-        return MIN_X_DISPLACEMENT + col * DISPLACEMENT_PER_SQUARE;
-    }
-
     private void drawBoard() {
+        float zTranslationPerRow = mTile.getMaxZ() - mTile.getMinZ();
+        float xTranslationPerCol = mTile.getMaxX() - mTile.getMinX();
+
+        float zTrans = MIN_Z_DISPLACEMENT;
+
         for (int row = 0; row < Board.SIZE; ++row) {
+            float xTrans = -xTranslationPerCol * (Board.SIZE + 1) / 2;
+
             for (int col = 0; col < Board.SIZE; ++col) {
-                Matrix.setIdentityM(mModelCube, 0);
-                //Matrix.scaleM(mModelCube, 0, 1.5f, 1.5f, 1.5f);
-                Matrix.translateM(mModelCube, 0, getXTranslation(col), MIN_Y_DISPLACEMENT, getZTranslation(row));
+                xTrans += xTranslationPerCol;
 
                 Board.Square square = mBoard.getSquare(row, col);
+
+                Matrix.setIdentityM(mTile.getModelMatrix(), 0);
+                Matrix.translateM(mTile.getModelMatrix(), 0, xTrans, FLOOR_DEPTH, zTrans);
+                mTile.setColor(Constants.getSquareColor(square.color));
+                mTile.load();
+                drawObject(mTile);
 
                 if (square.piece == null) {
                     continue;
                 }
 
-                Map<Constants.PieceType, ObjectModel> pieceModelMap;
+                Map<Constants.PieceType, Sprite> pieceModelMap;
                 switch (square.piece.color) {
                     case BLACK:
                         pieceModelMap = mBlackPieces;
@@ -338,9 +359,21 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                         continue;
                 }
 
-                ObjectModel object = pieceModelMap.get(square.piece.type);
+                Sprite object = pieceModelMap.get(square.piece.type);
+                float[] modelMatrix = object.getModelMatrix();
+                        Matrix.setIdentityM(modelMatrix, 0);
+                Matrix.translateM(modelMatrix,
+                        0,
+                        xTrans,
+                        FLOOR_DEPTH - object.getMinY(),
+                        zTrans);
+
+
                 drawObject(object);
             }
+
+            zTrans -= zTranslationPerRow;
         }
+
     }
 }

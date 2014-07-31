@@ -23,7 +23,7 @@ final class Constants {
     private static final float[] BLACK_SQUARE = {0.1f, 0.1f, 0.1f, 1.0f};
     private static final float[] WHITE_SQUARE = {0.99f, 0.99f, 0.99f, 1.0f};
 
-    private static final float[] BLACK_PIECE = {0.3f, 0.3f, 0.3f, 1.0f};
+    private static final float[] BLACK_PIECE = {0.15f, 0.15f, 0.15f, 1.0f};
     private static final float[] WHITE_PIECE = {0.8f, 0.8f, 0.8f, 1.0f};
 
     static float[] getSquareColor(SquareColor color) {
