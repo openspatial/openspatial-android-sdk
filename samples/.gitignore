@@ -6,3 +6,5 @@
 /.idea/runConfigurations/Debug_Buck_test.xml
 local.properties
 *.DS_Store
+gen/*
+bin/*
