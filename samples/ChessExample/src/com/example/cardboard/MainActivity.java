@@ -69,10 +69,10 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private float[] mModelFloor;
 
     private Board mBoard;
-    private final Map<Constants.PieceType, Sprite> mBlackPieces = new HashMap<Constants.PieceType, Sprite>();
-    private final Map<Constants.PieceType, Sprite> mWhitePieces = new HashMap<Constants.PieceType, Sprite>();
+    private final Map<Integer, Sprite> mIdSpriteMap = new HashMap<Integer, Sprite>();
+    private float mXTranslationPerCol;
+    private float mZTranslationPerRow;
     private Sprite mHand;
-    private Sprite mTile;
 
     /**
      * Converts a raw text file, saved as a resource, into an OpenGL ES shader
@@ -116,29 +116,41 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         }
     }
 
-    private void loadPieces() {
-        for (Constants.PieceType piece : Constants.PieceType.values()) {
-            Sprite whiteModel = new Sprite(this, Constants.getResourceIdForPiece(piece));
-            whiteModel.setColor(Constants.getPieceColor(Constants.PieceColor.WHITE));
-            whiteModel.load();
-            mWhitePieces.put(piece, whiteModel);
+    private Sprite loadSprite(int id, int resource, float[] color) {
+        Sprite sprite = new Sprite(this, resource);
+        sprite.setColor(color);
+        sprite.load();
 
-            Sprite blackModel = new Sprite(this, Constants.getResourceIdForPiece(piece));
-            blackModel.setColor(Constants.getPieceColor(Constants.PieceColor.BLACK));
-            blackModel.load();
-            mBlackPieces.put(piece, blackModel);
+        mIdSpriteMap.put(id, sprite);
+
+        return sprite;
+    }
+
+    private void loadBoard() {
+        mXTranslationPerCol = mZTranslationPerRow = 0;
+
+        for (int row = 0; row < Board.SIZE; ++row) {
+            for (int col = 0; col < Board.SIZE; ++col) {
+                Board.Square square = mBoard.getSquare(row, col);
+                Sprite s = loadSprite(square.tile.id, R.raw.tile, Constants.getSquareColor(square.tile.color));
+
+                if (mXTranslationPerCol == 0) {
+                    mXTranslationPerCol = s.getMaxX() - s.getMinX();
+                    mZTranslationPerRow = s.getMaxZ() - s.getMinZ();
+                }
+
+                if (square.piece != null) {
+                    loadSprite(square.piece.id,
+                            Constants.getResourceIdForPiece(square.piece.type),
+                            Constants.getPieceColor(square.piece.color));
+                }
+            }
         }
 
         mHand = new Sprite(this, R.raw.hand_withtexture);
         float[] color = {0.4f, 0.4f, 0.4f, 1.0f};
         mHand.setColor(color);
         mHand.load();
-
-        mTile = new Sprite(this, R.raw.tile);
-        float[] red = {0.5f, 0, 0, 1.0f};
-        mTile.setColor(red);
-
-        mTile.load();
     }
 
     /**
@@ -202,7 +214,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
         //Matrix.setIdentityM(mModelCube, 0);
         //Matrix.translateM(mModelCube, 0, 0, 0, -mObjectDistance);
-        loadPieces();
+        loadBoard();
         checkGLError("onSurfaceCreated");
     }
 
@@ -323,43 +335,26 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     }
 
     private void drawBoard() {
-        float zTranslationPerRow = mTile.getMaxZ() - mTile.getMinZ();
-        float xTranslationPerCol = mTile.getMaxX() - mTile.getMinX();
-
         float zTrans = MIN_Z_DISPLACEMENT;
 
         for (int row = 0; row < Board.SIZE; ++row) {
-            float xTrans = -xTranslationPerCol * (Board.SIZE + 1) / 2;
+            float xTrans = -mXTranslationPerCol * (Board.SIZE + 1) / 2;
 
             for (int col = 0; col < Board.SIZE; ++col) {
-                xTrans += xTranslationPerCol;
+                xTrans += mXTranslationPerCol;
 
                 Board.Square square = mBoard.getSquare(row, col);
+                Sprite tile = mIdSpriteMap.get(square.tile.id);
 
-                Matrix.setIdentityM(mTile.getModelMatrix(), 0);
-                Matrix.translateM(mTile.getModelMatrix(), 0, xTrans, FLOOR_DEPTH, zTrans);
-                mTile.setColor(Constants.getSquareColor(square.color));
-                mTile.load();
-                drawObject(mTile);
+                Matrix.setIdentityM(tile.getModelMatrix(), 0);
+                Matrix.translateM(tile.getModelMatrix(), 0, xTrans, FLOOR_DEPTH, zTrans);
+                drawObject(tile);
 
                 if (square.piece == null) {
                     continue;
                 }
 
-                Map<Constants.PieceType, Sprite> pieceModelMap;
-                switch (square.piece.color) {
-                    case BLACK:
-                        pieceModelMap = mBlackPieces;
-                        break;
-                    case WHITE:
-                        pieceModelMap = mWhitePieces;
-                        break;
-                    default:
-                        Log.e(TAG, "Unknown color " + square.piece.color);
-                        continue;
-                }
-
-                Sprite object = pieceModelMap.get(square.piece.type);
+                Sprite object = mIdSpriteMap.get(square.piece.id);
                 float[] modelMatrix = object.getModelMatrix();
                         Matrix.setIdentityM(modelMatrix, 0);
                 Matrix.translateM(modelMatrix,
@@ -372,7 +367,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                 drawObject(object);
             }
 
-            zTrans -= zTranslationPerRow;
+            zTrans -= mZTranslationPerRow;
         }
 
     }

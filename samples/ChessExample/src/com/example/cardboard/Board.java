@@ -2,13 +2,19 @@ package com.example.cardboard;
 
 public class Board {
     class Piece {
+        int id;
         Constants.PieceType type;
         Constants.PieceColor color;
     }
 
+    class Tile {
+        int id;
+        Constants.SquareColor color;
+    }
+
     class Square {
         Piece piece;
-        Constants.SquareColor color;
+        Tile tile;
     }
 
     static final int SIZE = 8;
@@ -37,6 +43,8 @@ public class Board {
 
     private Square[][] mBoard = new Square[SIZE][SIZE];
 
+    private int mNextId;
+
     private void initBoard() {
         int idx = 0;
 
@@ -45,12 +53,16 @@ public class Board {
                 int color = squares[idx++];
                 mBoard[row][col] = new Square();
 
+                Tile tile = new Tile();
+                tile.id = mNextId++;
+                mBoard[row][col].tile = tile;
+
                 switch (color) {
                     case 0:
-                        mBoard[row][col].color = Constants.SquareColor.BLACK;
+                        tile.color = Constants.SquareColor.BLACK;
                         break;
                     case 1:
-                        mBoard[row][col].color = Constants.SquareColor.WHITE;
+                        tile.color = Constants.SquareColor.WHITE;
                         break;
                 }
             }
@@ -69,6 +81,8 @@ public class Board {
                 }
 
                 mBoard[row][col].piece = new Piece();
+                mBoard[row][col].piece.id = mNextId++;
+
                 switch (piece) {
                     case 'P':
                         mBoard[row][col].piece.type = Constants.PieceType.PAWN;
@@ -103,6 +117,7 @@ public class Board {
 
 
     void init() {
+        mNextId = 1;
         initBoard();
         initPieces();
     }
