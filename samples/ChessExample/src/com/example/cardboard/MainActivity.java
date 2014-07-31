@@ -129,7 +129,9 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private void loadBoard() {
         mXTranslationPerCol = mZTranslationPerRow = 0;
 
+        float zTrans = MIN_Z_DISPLACEMENT;
         for (int row = 0; row < Board.SIZE; ++row) {
+            float xTrans = -mXTranslationPerCol * (Board.SIZE + 1) / 2;
             for (int col = 0; col < Board.SIZE; ++col) {
                 Board.Square square = mBoard.getSquare(row, col);
                 Sprite s = loadSprite(square.tile.id, R.raw.tile, Constants.getSquareColor(square.tile.color));
@@ -137,14 +139,30 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                 if (mXTranslationPerCol == 0) {
                     mXTranslationPerCol = s.getMaxX() - s.getMinX();
                     mZTranslationPerRow = s.getMaxZ() - s.getMinZ();
+                    xTrans = -mXTranslationPerCol * (Board.SIZE + 1) / 2;
                 }
 
+                xTrans += mXTranslationPerCol;
+
+                Matrix.setIdentityM(s.getModelMatrix(), 0);
+                Matrix.translateM(s.getModelMatrix(), 0, xTrans, FLOOR_DEPTH, zTrans);
+
                 if (square.piece != null) {
-                    loadSprite(square.piece.id,
+                    s = loadSprite(square.piece.id,
                             Constants.getResourceIdForPiece(square.piece.type),
                             Constants.getPieceColor(square.piece.color));
+
+                    float[] modelMatrix = s.getModelMatrix();
+                    Matrix.setIdentityM(modelMatrix, 0);
+                    Matrix.translateM(modelMatrix,
+                            0,
+                            xTrans,
+                            FLOOR_DEPTH - s.getMinY(),
+                            zTrans);
                 }
             }
+
+            zTrans -= mZTranslationPerRow;
         }
 
         mHand = new Sprite(this, R.raw.hand_withtexture);
@@ -335,19 +353,12 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     }
 
     private void drawBoard() {
-        float zTrans = MIN_Z_DISPLACEMENT;
-
         for (int row = 0; row < Board.SIZE; ++row) {
-            float xTrans = -mXTranslationPerCol * (Board.SIZE + 1) / 2;
-
             for (int col = 0; col < Board.SIZE; ++col) {
-                xTrans += mXTranslationPerCol;
 
                 Board.Square square = mBoard.getSquare(row, col);
-                Sprite tile = mIdSpriteMap.get(square.tile.id);
 
-                Matrix.setIdentityM(tile.getModelMatrix(), 0);
-                Matrix.translateM(tile.getModelMatrix(), 0, xTrans, FLOOR_DEPTH, zTrans);
+                Sprite tile = mIdSpriteMap.get(square.tile.id);
                 drawObject(tile);
 
                 if (square.piece == null) {
@@ -355,19 +366,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                 }
 
                 Sprite object = mIdSpriteMap.get(square.piece.id);
-                float[] modelMatrix = object.getModelMatrix();
-                        Matrix.setIdentityM(modelMatrix, 0);
-                Matrix.translateM(modelMatrix,
-                        0,
-                        xTrans,
-                        FLOOR_DEPTH - object.getMinY(),
-                        zTrans);
-
-
                 drawObject(object);
             }
-
-            zTrans -= mZTranslationPerRow;
         }
 
     }
