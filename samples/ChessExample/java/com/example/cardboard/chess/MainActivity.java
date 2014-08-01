@@ -22,7 +22,15 @@ import android.opengl.Matrix;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.Bullet;
+import com.badlogic.gdx.physics.bullet.collision.*;
+import com.badlogic.gdx.physics.bullet.dynamics.btConstraintSolver;
+import com.badlogic.gdx.physics.bullet.dynamics.btDiscreteDynamicsWorld;
+import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
+import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver;
+import com.badlogic.gdx.physics.bullet.linearmath.btDefaultMotionState;
 import com.google.vrtoolkit.cardboard.*;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -32,6 +40,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * A Cardboard sample application.
@@ -52,6 +62,9 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private static float MIN_Z_DISPLACEMENT = -1f;
     private static float FLOOR_DEPTH = -1.0f;
     private static float HAND_DEPTH = -1.0f;
+
+    private static float PIECE_MASS = 0.2f;
+    private static float HAND_MASS = 2.5f;
 
     private int mGlProgram;
     private int mPositionParam;
@@ -78,6 +91,15 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private float mZTranslationPerRow;
     private Sprite mHand;
 
+    private btCollisionConfiguration mCollisionConfiguration;
+    private btCollisionDispatcher mDispatcher;
+    private btBroadphaseInterface mBroadphase;
+    private btConstraintSolver mSolver;
+    private btDiscreteDynamicsWorld mDynamicsWorld;
+
+    private Timer mPhysicsTimerThread;
+
+    private Map<Sprite, btRigidBody> mSpriteBodyMap = new HashMap<Sprite, btRigidBody>();
     /**
      * Converts a raw text file, saved as a resource, into an OpenGL ES shader
      * @param type The type of shader we will be creating.
@@ -120,6 +142,48 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         }
     }
 
+    private void addRigidBody(Sprite sprite, btCollisionShape shape, float mass) {
+        btDefaultMotionState motionState = new btDefaultMotionState(new Matrix4(sprite.getModelMatrix()));
+
+        Vector3 inertia = new Vector3();
+        shape.calculateLocalInertia(mass, inertia);
+
+        btRigidBody.btRigidBodyConstructionInfo info =
+                new btRigidBody.btRigidBodyConstructionInfo(mass, motionState, shape, inertia);
+        btRigidBody body = new btRigidBody(info);
+
+        mDynamicsWorld.addRigidBody(body);
+
+        if (mass != 0) {
+            // Add only if dynamic body since static bodies won't be transformed
+            mSpriteBodyMap.put(sprite, body);
+        }
+    }
+
+    private void addBoxShapeRigidBody(Sprite sprite, float mass) {
+        btCollisionShape shape = new btBoxShape(new Vector3(sprite.getHalfExtents()));
+
+        addRigidBody(sprite, shape, mass);
+    }
+
+    private void addConvexHullRigidBody(Sprite sprite, float mass) {
+        btCollisionShape shape = new btConvexHullShape(sprite.getVertices());
+
+        addRigidBody(sprite, shape, mass);
+    }
+
+    private void addPlaneRigidBody(final float[] normal, final float constant) {
+        btCollisionShape shape = new btStaticPlaneShape(new Vector3(normal[0], normal[1], normal[2]), constant);
+
+        btDefaultMotionState motionState = new btDefaultMotionState(new Matrix4());
+
+        btRigidBody.btRigidBodyConstructionInfo info =
+                new btRigidBody.btRigidBodyConstructionInfo(0, motionState, shape, new Vector3(0, 0, 0));
+        btRigidBody body = new btRigidBody(info);
+
+        mDynamicsWorld.addRigidBody(body);
+    }
+
     private Sprite loadSprite(int id, int resource, float[] color) {
         Sprite sprite = new Sprite(this, resource);
         sprite.setColor(color);
@@ -138,41 +202,91 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
             float xTrans = -mXTranslationPerCol * (Board.SIZE + 1) / 2;
             for (int col = 0; col < Board.SIZE; ++col) {
                 Board.Square square = mBoard.getSquare(row, col);
-                Sprite s = loadSprite(square.tile.id, R.raw.tile, Constants.getSquareColor(square.tile.color));
+                Sprite tile = loadSprite(square.tile.id, R.raw.tile, Constants.getSquareColor(square.tile.color));
 
                 if (mXTranslationPerCol == 0) {
-                    mXTranslationPerCol = s.getMaxX() - s.getMinX();
-                    mZTranslationPerRow = s.getMaxZ() - s.getMinZ();
+                    mXTranslationPerCol = tile.getMaxX() - tile.getMinX();
+                    mZTranslationPerRow = tile.getMaxZ() - tile.getMinZ();
                     xTrans = -mXTranslationPerCol * (Board.SIZE + 1) / 2;
                 }
 
                 xTrans += mXTranslationPerCol;
 
-                Matrix.setIdentityM(s.getModelMatrix(), 0);
-                Matrix.translateM(s.getModelMatrix(), 0, xTrans, FLOOR_DEPTH, zTrans);
+                Matrix.setIdentityM(tile.getModelMatrix(), 0);
+                Matrix.translateM(tile.getModelMatrix(), 0, xTrans, FLOOR_DEPTH, zTrans);
+
+                addBoxShapeRigidBody(tile, 0); // Tiles are not dynamic, so 0 mass
 
                 if (square.piece != null) {
-                    s = loadSprite(square.piece.id,
+                    Sprite piece = loadSprite(square.piece.id,
                             Constants.getResourceIdForPiece(square.piece.type),
                             Constants.getPieceColor(square.piece.color));
 
-                    float[] modelMatrix = s.getModelMatrix();
+                    float[] modelMatrix = piece.getModelMatrix();
                     Matrix.setIdentityM(modelMatrix, 0);
                     Matrix.translateM(modelMatrix,
                             0,
                             xTrans,
-                            FLOOR_DEPTH - s.getMinY(),
+                            FLOOR_DEPTH + Math.abs(piece.getMinY()) + Math.abs(tile.getMinY()),
                             zTrans);
+
+                    addBoxShapeRigidBody(piece, PIECE_MASS);
                 }
             }
 
             zTrans -= mZTranslationPerRow;
         }
+    }
+
+    private void loadWorld() {
+        loadBoard();
 
         mHand = new Sprite(this, R.raw.hand_withtexture);
         float[] color = {0.4f, 0.4f, 0.4f, 1.0f};
         mHand.setColor(color);
         mHand.load();
+        addConvexHullRigidBody(mHand, HAND_MASS);
+
+        mPhysicsTimerThread.scheduleAtFixedRate(new TimerTask() {
+            private long lastRun = System.currentTimeMillis();
+            @Override
+            public void run() {
+                long curTime = System.currentTimeMillis();
+                mDynamicsWorld.stepSimulation(((float)(curTime - lastRun)) / 1000);
+                lastRun = curTime;
+
+                for (Sprite s : mSpriteBodyMap.keySet()) {
+                    btRigidBody body = mSpriteBodyMap.get(s);
+                    Matrix4 bodyTransform = new Matrix4();
+                    body.getMotionState().getWorldTransform(bodyTransform);
+
+                    Vector3 translation = new Vector3();
+                    bodyTransform.getTranslation(translation);
+
+                    synchronized (s.getModelMatrix()) {
+                        System.arraycopy(bodyTransform.val, 0, s.getModelMatrix(), 0, bodyTransform.val.length);
+                    }
+                }
+            }
+        }, 0, 17); // 60Hz
+    }
+
+    private void bulletInit() {
+        Bullet.init();
+
+        mCollisionConfiguration = new btDefaultCollisionConfiguration();
+        mDispatcher = new btCollisionDispatcher(mCollisionConfiguration);
+        mBroadphase = new btDbvtBroadphase();
+        mSolver = new btSequentialImpulseConstraintSolver();
+
+        mDynamicsWorld = new btDiscreteDynamicsWorld(
+                mDispatcher,
+                mBroadphase,
+                mSolver,
+                mCollisionConfiguration);
+
+        // No gravity
+        mDynamicsWorld.setGravity(new Vector3(0, -10, 0));
     }
 
     /**
@@ -200,7 +314,9 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         mBoard = new Board();
         mBoard.init();
 
-        Bullet.init();
+        bulletInit();
+
+        mPhysicsTimerThread = new Timer();
     }
 
     @Override
@@ -236,10 +352,9 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
-        //Matrix.setIdentityM(mModelCube, 0);
-        //Matrix.translateM(mModelCube, 0, 0, 0, -mObjectDistance);
-        loadBoard();
         checkGLError("onSurfaceCreated");
+
+        loadWorld();
     }
 
     /**
@@ -327,7 +442,11 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
      * the shader.
      */
     public void drawObject(Sprite sprite) {
-        float[] modelMatrix = sprite.getModelMatrix();
+        float[] modelMatrix = new float[16];
+
+        synchronized (sprite.getModelMatrix()) {
+            System.arraycopy(sprite.getModelMatrix(), 0, modelMatrix, 0, modelMatrix.length);
+        }
 
         // Set the Model in the shader, used to calculate lighting
         GLES20.glUniformMatrix4fv(mModelParam, 1, false, modelMatrix, 0);

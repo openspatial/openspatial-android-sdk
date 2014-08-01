@@ -158,6 +158,18 @@ public class Sprite {
         return mMaxZ;
     }
 
+    float[] getHalfExtents() {
+        float[] halfExtents = new float[3];
+
+        // Use mins so objects stand on one another correctly
+        // This breaks badly if objects aren't centered around the origin
+        halfExtents[0] = Math.abs(getMinX());
+        halfExtents[1] = Math.abs(getMinY());
+        halfExtents[2] = Math.abs(getMinZ());
+
+        return halfExtents;
+    }
+
     float[] getModelMatrix() {
         return mModelMatrix;
     }
