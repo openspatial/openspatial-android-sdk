@@ -1,4 +1,4 @@
-package com.example.cardboard;
+package com.example.cardboard.chess;
 
 final class Constants {
     static enum PieceType {

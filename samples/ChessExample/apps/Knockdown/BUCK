@@ -1,0 +1,21 @@
+keystore(
+  name = 'Knockdown.keystore',
+  store = 'Knockdown.keystore',
+  properties = 'Knockdown.keystore.properties',
+)
+
+android_binary(
+  name = 'Knockdown',
+  manifest = 'AndroidManifest.xml',
+  target = 'Google Inc.:Google APIs:19',
+  keystore = ':Knockdown.keystore',
+  deps = [
+    '//res/com/example/cardboard/chess:res',
+    '//java/com/example/cardboard/chess:chess',
+    '//libs:gdx-bullet',
+  ],
+)
+
+project_config(
+  src_target=':Knockdown',
+)

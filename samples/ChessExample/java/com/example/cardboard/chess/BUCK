@@ -1,0 +1,21 @@
+android_library(
+  name = 'chess',
+  srcs = glob(['*.java']),
+  deps = [
+    '//res/com/example/cardboard/chess:res',
+    '//libs:cardboard',
+    '//libs:OpenSpatial',
+    '//libs:gdx',
+    '//libs:gdx-bullet',
+    '//libs:modelloader',
+    '//libs:native_libs',
+  ],
+  visibility = [
+    '//apps/Knockdown:',
+  ],
+)
+
+project_config(
+  src_target = ':chess',
+)
+

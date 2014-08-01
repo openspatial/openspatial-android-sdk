@@ -1,0 +1,15 @@
+android_resource(
+  name = 'res',
+  res = 'res',
+  package = 'com.example.cardboard.chess',
+  visibility = [
+    '//java/com/example/cardboard/chess:',
+    '//apps/Knockdown:',
+  ]
+)
+
+project_config(
+  src_target=':res',
+  src_roots = None,
+)
+

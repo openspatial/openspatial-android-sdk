@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package com.example.cardboard;
+package com.example.cardboard.chess;
 
+import android.annotation.TargetApi;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import com.badlogic.gdx.physics.bullet.Bullet;
 import com.google.vrtoolkit.cardboard.*;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -33,6 +36,7 @@ import java.util.Map;
 /**
  * A Cardboard sample application.
  */
+@TargetApi(Build.VERSION_CODES.KITKAT)
 public class MainActivity extends CardboardActivity implements CardboardView.StereoRenderer {
 
     private static final String TAG = "ChessExample";
@@ -195,6 +199,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
         mBoard = new Board();
         mBoard.init();
+
+        Bullet.init();
     }
 
     @Override

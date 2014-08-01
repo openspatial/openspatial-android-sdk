@@ -1,4 +1,4 @@
-package com.example.cardboard;
+package com.example.cardboard.chess;
 
 import android.content.Context;
 import android.util.Log;

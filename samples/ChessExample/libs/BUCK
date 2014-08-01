@@ -1,0 +1,51 @@
+prebuilt_jar(
+  name = 'modelloader',
+  binary_jar = 'modelloader.jar',
+  visibility = [
+    'PUBLIC',
+  ]
+)
+
+prebuilt_jar(
+  name = 'cardboard',
+  binary_jar = 'cardboard.jar',
+  visibility = [
+    'PUBLIC',
+  ]
+)
+
+prebuilt_jar(
+  name = 'OpenSpatial',
+  binary_jar = 'OpenSpatialSDKv0.6.jar',
+  visibility = [
+    'PUBLIC',
+  ]
+)
+
+prebuilt_jar(
+  name = 'gdx',
+  binary_jar = 'gdx.jar',
+  visibility = [
+    'PUBLIC',
+  ]
+)
+
+prebuilt_jar(
+  name = 'gdx-bullet',
+  binary_jar = 'gdx-bullet.jar',
+  deps = [
+    ':gdx',
+    ':native_libs',
+  ],
+  visibility = [
+    'PUBLIC',
+  ]
+)
+
+prebuilt_native_library(
+  name = 'native_libs',
+  native_libs = 'native',
+  visibility = [
+    'PUBLIC',
+  ]
+)
