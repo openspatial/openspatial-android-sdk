@@ -25,6 +25,7 @@ import android.opengl.Matrix;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 import com.google.vrtoolkit.cardboard.*;
 import net.openspatial.*;
 
@@ -95,15 +96,9 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             openSpatialService = ((OpenSpatialService.OpenSpatialServiceBinder)service).getService();
-            openSpatialService.getConnectedDevices(new OpenSpatialService.OpenSpatialServiceCallback() {
+            openSpatialService.initialize(TAG, new OpenSpatialService.OpenSpatialServiceCallback() {
                 @Override
-                public void deviceListUpdated(Set<BluetoothDevice> bluetoothDevices) {
-                    if (bluetoothDevices.size() == 0) {
-                        return;
-                    }
-
-                    // Pick the first connected device
-                    BluetoothDevice device = (BluetoothDevice) bluetoothDevices.toArray()[0];
+                public void deviceConnected(BluetoothDevice device) {
                     try {
                         openSpatialService.registerForPose6DEvents(device, new OpenSpatialEvent.EventListener() {
                             @Override
@@ -141,9 +136,27 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                     } catch (OpenSpatialException e) {
                         Log.e(TAG, "Could not register for rotation events: " + e.getMessage());
                     }
-
                 }
+
+                @Override
+                public void buttonEventRegistrationResult(BluetoothDevice device, int status) {
+                }
+
+                @Override
+                public void pointerEventRegistrationResult(BluetoothDevice device, int status) {
+                }
+
+                @Override
+                public void pose6DEventRegistrationResult(BluetoothDevice device, int status) {
+                }
+
+                @Override
+                public void gestureEventRegistrationResult(BluetoothDevice device, int status) {
+                }
+
             });
+
+            openSpatialService.getConnectedDevices();
         };
 
         @Override
