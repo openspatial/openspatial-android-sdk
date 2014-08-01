@@ -305,7 +305,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                 mLightPosInEyeSpace[2]);
 
         mPerspective = transform.getPerspective();
-        drawBoard();
+        drawWorld();
 
         Matrix.setIdentityM(mHand.getModelMatrix(), 0);
         Matrix.translateM(mHand.getModelMatrix(), 0, 0, HAND_DEPTH, MIN_Z_DISPLACEMENT * 2);
@@ -352,23 +352,9 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         checkGLError("Drawing cube");
     }
 
-    private void drawBoard() {
-        for (int row = 0; row < Board.SIZE; ++row) {
-            for (int col = 0; col < Board.SIZE; ++col) {
-
-                Board.Square square = mBoard.getSquare(row, col);
-
-                Sprite tile = mIdSpriteMap.get(square.tile.id);
-                drawObject(tile);
-
-                if (square.piece == null) {
-                    continue;
-                }
-
-                Sprite object = mIdSpriteMap.get(square.piece.id);
-                drawObject(object);
-            }
+    private void drawWorld() {
+        for (int id : mIdSpriteMap.keySet()) {
+            drawObject(mIdSpriteMap.get(id));
         }
-
     }
 }
