@@ -17,10 +17,15 @@
 package com.example.cardboard.chess;
 
 import android.annotation.TargetApi;
+import android.bluetooth.BluetoothDevice;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.util.Log;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
@@ -32,16 +37,15 @@ import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver;
 import com.badlogic.gdx.physics.bullet.linearmath.btDefaultMotionState;
 import com.google.vrtoolkit.cardboard.*;
+import net.openspatial.*;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * A Cardboard sample application.
@@ -61,10 +65,12 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private static final int COORDS_PER_VERTEX = 3;
     private static float MIN_Z_DISPLACEMENT = -1f;
     private static float FLOOR_DEPTH = -1.0f;
-    private static float HAND_DEPTH = -1.0f;
+    private static float HAND_DEPTH = -0.5f;
 
     private static float PIECE_MASS = 0.2f;
     private static float HAND_MASS = 2.5f;
+
+    private static final int EVENTS_PER_ITERATION = 10;
 
     private int mGlProgram;
     private int mPositionParam;
@@ -75,15 +81,12 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private int mModelViewParam;
     private int mModelParam;
 
-    //private float[] mModelCube;
     private float[] mCamera;
     private float[] mView;
     private float[] mHeadView;
     private float[] mModelViewProjection;
     private float[] mModelView;
     private float[] mPerspective;
-
-    private float[] mModelFloor;
 
     private Board mBoard;
     private final Map<Integer, Sprite> mIdSpriteMap = new HashMap<Integer, Sprite>();
@@ -97,9 +100,70 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private btConstraintSolver mSolver;
     private btDiscreteDynamicsWorld mDynamicsWorld;
 
+    private float mHandXTranslation;
+    private float mHandYTranslation;
+
     private Timer mPhysicsTimerThread;
 
-    private Map<Sprite, btRigidBody> mSpriteBodyMap = new HashMap<Sprite, btRigidBody>();
+    private final Map<Sprite, btRigidBody> mSpriteBodyMap = new HashMap<Sprite, btRigidBody>();
+    private final Queue<Pose6DEvent> mHandTransforms = new ConcurrentLinkedQueue<Pose6DEvent>();
+
+    private float[] mRingXAxis = new float[] {1, 0, 0, 0};
+    private float[] mRingYAxis = new float[] {0, 1, 0, 0};
+    private float[] mRingZAxis = new float[] {0, 0, 1, 0};
+
+    OpenSpatialService mOpenSpatialService;
+    private ServiceConnection mOpenSpatialServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mOpenSpatialService = ((OpenSpatialService.OpenSpatialServiceBinder)service).getService();
+
+            mOpenSpatialService.initialize(TAG, new OpenSpatialService.OpenSpatialServiceCallback() {
+                @Override
+                public void deviceConnected(BluetoothDevice device) {
+                    try {
+                        mOpenSpatialService.registerForPose6DEvents(device, new OpenSpatialEvent.EventListener() {
+                            @Override
+                            public void onEventReceived(OpenSpatialEvent event) {
+                                mHandTransforms.add((Pose6DEvent) event);
+                            }
+                        });
+                    } catch (OpenSpatialException e) {
+                        Log.e(TAG, "Error registering for Pose6DEvent " + e);
+                    }
+                }
+
+                @Override
+                public void buttonEventRegistrationResult(BluetoothDevice device, int i) {
+                }
+
+                @Override
+                public void pointerEventRegistrationResult(BluetoothDevice device, int i) {
+                }
+
+                @Override
+                public void pose6DEventRegistrationResult(BluetoothDevice device, int i) {
+
+                }
+
+                @Override
+                public void gestureEventRegistrationResult(BluetoothDevice device, int i) {
+                }
+            });
+
+            mOpenSpatialService.getConnectedDevices();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mOpenSpatialService = null;
+        }
+    };
+
+    private float getDegrees(float radians) {
+        return radians * 180 / (float)Math.PI;
+    }
+
     /**
      * Converts a raw text file, saved as a resource, into an OpenGL ES shader
      * @param type The type of shader we will be creating.
@@ -142,7 +206,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         }
     }
 
-    private void addRigidBody(Sprite sprite, btCollisionShape shape, float mass) {
+    private void addRigidBody(Sprite sprite, btCollisionShape shape, float mass, boolean kinematic) {
         btDefaultMotionState motionState = new btDefaultMotionState(new Matrix4(sprite.getModelMatrix()));
 
         Vector3 inertia = new Vector3();
@@ -152,6 +216,11 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                 new btRigidBody.btRigidBodyConstructionInfo(mass, motionState, shape, inertia);
         btRigidBody body = new btRigidBody(info);
 
+        if (kinematic) {
+            body.setCollisionFlags(body.getCollisionFlags() | btCollisionObject.CollisionFlags.CF_KINEMATIC_OBJECT);
+            body.setActivationState(Collision.DISABLE_DEACTIVATION);
+        }
+
         mDynamicsWorld.addRigidBody(body);
 
         if (mass != 0) {
@@ -160,16 +229,16 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         }
     }
 
-    private void addBoxShapeRigidBody(Sprite sprite, float mass) {
+    private void addBoxShapeRigidBody(Sprite sprite, float mass, boolean kinematic) {
         btCollisionShape shape = new btBoxShape(new Vector3(sprite.getHalfExtents()));
 
-        addRigidBody(sprite, shape, mass);
+        addRigidBody(sprite, shape, mass, kinematic);
     }
 
-    private void addConvexHullRigidBody(Sprite sprite, float mass) {
+    private void addConvexHullRigidBody(Sprite sprite, float mass, boolean kinematic) {
         btCollisionShape shape = new btConvexHullShape(sprite.getVertices());
 
-        addRigidBody(sprite, shape, mass);
+        addRigidBody(sprite, shape, mass, kinematic);
     }
 
     private void addPlaneRigidBody(final float[] normal, final float constant) {
@@ -212,47 +281,123 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
                 xTrans += mXTranslationPerCol;
 
-                Matrix.setIdentityM(tile.getModelMatrix(), 0);
-                Matrix.translateM(tile.getModelMatrix(), 0, xTrans, FLOOR_DEPTH, zTrans);
+                float[] modelMatrix = tile.getModelMatrix();
+                Matrix.setIdentityM(modelMatrix, 0);
+                Matrix.translateM(modelMatrix,
+                        0,
+                        xTrans,
+                        FLOOR_DEPTH,
+                        zTrans);
+                tile.setModelMatrix(modelMatrix);
 
-                addBoxShapeRigidBody(tile, 0); // Tiles are not dynamic, so 0 mass
+                addBoxShapeRigidBody(tile, 0, false); // Tiles are not dynamic, so 0 mass
 
                 if (square.piece != null) {
                     Sprite piece = loadSprite(square.piece.id,
                             Constants.getResourceIdForPiece(square.piece.type),
                             Constants.getPieceColor(square.piece.color));
 
-                    float[] modelMatrix = piece.getModelMatrix();
+                    modelMatrix = piece.getModelMatrix();
+                    float[] halfExtents = piece.getHalfExtents();
                     Matrix.setIdentityM(modelMatrix, 0);
                     Matrix.translateM(modelMatrix,
                             0,
                             xTrans,
-                            FLOOR_DEPTH + Math.abs(piece.getMinY()) + Math.abs(tile.getMinY()),
+                            FLOOR_DEPTH + halfExtents[1],
                             zTrans);
 
-                    addBoxShapeRigidBody(piece, PIECE_MASS);
+                    piece.setModelMatrix(modelMatrix);
+                    addBoxShapeRigidBody(piece, PIECE_MASS, false);
                 }
             }
 
             zTrans -= mZTranslationPerRow;
         }
+
+        addPlaneRigidBody(new float[]{0, 1, 0}, FLOOR_DEPTH);
+    }
+
+    private void loadHand() {
+        mHand = loadSprite(77, R.raw.hand_withtexture, new float[]{0.4f, 0.4f, 0.4f, 1.0f});
+        float[] origin = mHand.getOrigin();
+
+        mHandXTranslation = 0 - origin[0];
+        mHandYTranslation = HAND_DEPTH - origin[1];
+
+        float[] modelMatrix = mHand.getModelMatrix();
+        Matrix.setIdentityM(modelMatrix, 0);
+        Matrix.translateM(modelMatrix,
+                0,
+                mHandXTranslation,
+                mHandYTranslation,
+                MIN_Z_DISPLACEMENT - origin[2]);
+
+        mHand.setModelMatrix(modelMatrix);
+        addBoxShapeRigidBody(mHand, HAND_MASS, true);
+    }
+
+    private void transformAxis(float[] axis, float[] matrix) {
+        float[] copy = new float[4];
+
+        System.arraycopy(axis, 0, copy, 0, copy.length);
+
+        Matrix.multiplyMV(axis, 0, matrix, 0, copy, 0);
+    }
+
+    private void moveHand(Pose6DEvent event) {
+        EulerAngle eulerAngle = event.getEulerAngle();
+        float xrot = -getDegrees((float)eulerAngle.pitch);
+        float yrot = getDegrees((float)eulerAngle.yaw);
+        float zrot = -getDegrees((float)eulerAngle.roll);
+
+        btRigidBody body = mSpriteBodyMap.get(mHand);
+        body.getWorldTransform();
+        Matrix4 currentTransform = new Matrix4();
+        body.getMotionState().getWorldTransform(currentTransform);
+        float[] values = currentTransform.getValues();
+        float[] transform = new float[16];
+
+        Matrix.setIdentityM(transform, 0);
+        Matrix.translateM(transform, 0, mHandXTranslation, mHandYTranslation, 0);
+        Matrix.rotateM(transform, 0, xrot, mRingXAxis[0], mRingXAxis[1], mRingXAxis[2]);
+        Matrix.rotateM(transform, 0, yrot, mRingYAxis[0], mRingYAxis[1], mRingYAxis[2]);
+
+        // Rotate the axes before applying roll since the ring gives us pitch and yaw
+        // regardless of which way is up
+        transformAxis(mRingXAxis, transform);
+        transformAxis(mRingYAxis, transform);
+        transformAxis(mRingZAxis, transform);
+
+        Matrix.rotateM(transform, 0, zrot, mRingZAxis[0], mRingZAxis[1], mRingZAxis[2]);
+        Matrix.translateM(transform, 0, -mHandXTranslation, -mHandYTranslation, 0);
+
+        float[] result = new float[16];
+        Matrix.multiplyMM(result, 0, transform, 0, values, 0);
+        body.getMotionState().setWorldTransform(new Matrix4(result));
+        body.setActivationState(Collision.ACTIVE_TAG);
+    }
+
+    private void processHandUpdates() {
+        int numProcessed = 0;
+
+        while (numProcessed++ < EVENTS_PER_ITERATION && !mHandTransforms.isEmpty()) {
+            Pose6DEvent event = mHandTransforms.remove();
+            moveHand(event);
+        }
     }
 
     private void loadWorld() {
         loadBoard();
-
-        mHand = new Sprite(this, R.raw.hand_withtexture);
-        float[] color = {0.4f, 0.4f, 0.4f, 1.0f};
-        mHand.setColor(color);
-        mHand.load();
-        addConvexHullRigidBody(mHand, HAND_MASS);
+        loadHand();
 
         mPhysicsTimerThread.scheduleAtFixedRate(new TimerTask() {
             private long lastRun = System.currentTimeMillis();
+
             @Override
             public void run() {
                 long curTime = System.currentTimeMillis();
-                mDynamicsWorld.stepSimulation(((float)(curTime - lastRun)) / 1000);
+
+                mDynamicsWorld.stepSimulation(((float) (curTime - lastRun)) / 1000);
                 lastRun = curTime;
 
                 for (Sprite s : mSpriteBodyMap.keySet()) {
@@ -260,15 +405,15 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                     Matrix4 bodyTransform = new Matrix4();
                     body.getMotionState().getWorldTransform(bodyTransform);
 
-                    Vector3 translation = new Vector3();
-                    bodyTransform.getTranslation(translation);
-
-                    synchronized (s.getModelMatrix()) {
-                        System.arraycopy(bodyTransform.val, 0, s.getModelMatrix(), 0, bodyTransform.val.length);
+                    synchronized (s) {
+                        s.setModelMatrix(bodyTransform.getValues());
                     }
                 }
+
+                // Process any hand updates
+                processHandUpdates();
             }
-        }, 0, 17); // 60Hz
+        }, 2000, 17); // 60Hz
     }
 
     private void bulletInit() {
@@ -303,12 +448,10 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         cardboardView.setRenderer(this);
         setCardboardView(cardboardView);
 
-        //mModelCube = new float[16];
         mCamera = new float[16];
         mView = new float[16];
         mModelViewProjection = new float[16];
         mModelView = new float[16];
-        mModelFloor = new float[16];
         mHeadView = new float[16];
 
         mBoard = new Board();
@@ -317,6 +460,14 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         bulletInit();
 
         mPhysicsTimerThread = new Timer();
+
+        bindService(new Intent(this, OpenSpatialService.class), mOpenSpatialServiceConnection, BIND_AUTO_CREATE);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unbindService(mOpenSpatialServiceConnection);
     }
 
     @Override
@@ -427,10 +578,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
         mPerspective = transform.getPerspective();
         drawWorld();
-
-        Matrix.setIdentityM(mHand.getModelMatrix(), 0);
-        Matrix.translateM(mHand.getModelMatrix(), 0, 0, HAND_DEPTH, MIN_Z_DISPLACEMENT * 2);
-        drawObject(mHand);
     }
 
     @Override
@@ -442,10 +589,10 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
      * the shader.
      */
     public void drawObject(Sprite sprite) {
-        float[] modelMatrix = new float[16];
+        float[] modelMatrix;
 
-        synchronized (sprite.getModelMatrix()) {
-            System.arraycopy(sprite.getModelMatrix(), 0, modelMatrix, 0, modelMatrix.length);
+        synchronized (sprite) {
+            modelMatrix = sprite.getModelMatrix();
         }
 
         // Set the Model in the shader, used to calculate lighting

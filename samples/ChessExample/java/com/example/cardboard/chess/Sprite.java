@@ -1,7 +1,7 @@
 package com.example.cardboard.chess;
 
 import android.content.Context;
-import android.util.Log;
+import android.opengl.Matrix;
 import edu.union.graphics.FloatMesh;
 import edu.union.graphics.Mesh;
 import edu.union.graphics.Model;
@@ -158,19 +158,41 @@ public class Sprite {
         return mMaxZ;
     }
 
+    float[] getOrigin() {
+        float[] origin = new float[3];
+
+        origin[0] = (getMaxX() + getMinX()) / 2;
+        origin[1] = (getMaxY() + getMinY()) / 2;
+        origin[2] = (getMaxZ() + getMinZ()) / 2;
+
+        return origin;
+    }
+
     float[] getHalfExtents() {
         float[] halfExtents = new float[3];
+        float[] origin = getOrigin();
 
-        // Use mins so objects stand on one another correctly
-        // This breaks badly if objects aren't centered around the origin
-        halfExtents[0] = Math.abs(getMinX());
-        halfExtents[1] = Math.abs(getMinY());
-        halfExtents[2] = Math.abs(getMinZ());
+        halfExtents[0] = getMaxX() - origin[0];
+        halfExtents[1] = getMaxY() - origin[1];
+        halfExtents[2] = getMaxZ() - origin[2];
 
         return halfExtents;
     }
 
-    float[] getModelMatrix() {
-        return mModelMatrix;
+    private float[] clone(float[] src) {
+        float[] target = new float[src.length];
+
+        System.arraycopy(src, 0, target, 0, src.length);
+
+        return target;
     }
+
+    float[] getModelMatrix() {
+        return clone(mModelMatrix);
+    }
+
+    void setModelMatrix(float[] matrix) {
+        System.arraycopy(matrix, 0, mModelMatrix, 0, mModelMatrix.length);
+    }
+
 }
