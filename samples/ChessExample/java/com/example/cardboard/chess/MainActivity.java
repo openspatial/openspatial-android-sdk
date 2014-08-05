@@ -539,9 +539,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         GLES20.glClearColor(0.1f, 0.1f, 0.1f, 0.5f); // Dark background so text shows up well
 
         int vertexShader = loadGLShader(GLES20.GL_VERTEX_SHADER, R.raw.light_vertex);
-        //int gridShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.grid_fragment);
 
-        //int vertexShader = loadGLShader(GLES20.GL_VERTEX_SHADER, R.raw.simple_vertex);
         int gridShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.simple_fragment);
 
         mGlProgram = GLES20.glCreateProgram();
