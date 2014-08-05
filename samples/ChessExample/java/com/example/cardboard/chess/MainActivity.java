@@ -56,7 +56,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private static final String TAG = "ChessExample";
 
     private static final float CAMERA_Z = 0.1f;
-    private static final float TIME_DELTA = 0.3f;
 
     // We keep the light always position just above the user.
     private final float[] mLightPosInWorldSpace = new float[] {0.0f, 2.0f, 0.0f, 1.0f};
@@ -112,6 +111,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private float[] mRingYAxis = new float[] {0, 1, 0, 0};
     private float[] mRingZAxis = new float[] {0, 0, 1, 0};
 
+    private boolean mStart = false;
+
     OpenSpatialService mOpenSpatialService;
     private ServiceConnection mOpenSpatialServiceConnection = new ServiceConnection() {
         @Override
@@ -125,9 +126,27 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                         mOpenSpatialService.registerForPose6DEvents(device, new OpenSpatialEvent.EventListener() {
                             @Override
                             public void onEventReceived(OpenSpatialEvent event) {
+                                if (!mStart) {
+                                    return;
+                                }
+
                                 mHandTransforms.add((Pose6DEvent) event);
                             }
                         });
+
+                        mOpenSpatialService.registerForButtonEvents(device, new OpenSpatialEvent.EventListener() {
+                            @Override
+                            public void onEventReceived(OpenSpatialEvent event) {
+                                ButtonEvent bEvent = (ButtonEvent)event;
+
+                                if (bEvent.buttonEventType == ButtonEvent.ButtonEventType.TOUCH2_DOWN) {
+                                    mStart = true;
+                                } else if (bEvent.buttonEventType == ButtonEvent.ButtonEventType.TOUCH0_DOWN) {
+                                    recenterHand();
+                                }
+                            }
+                        });
+
                     } catch (OpenSpatialException e) {
                         Log.e(TAG, "Error registering for Pose6DEvent " + e);
                     }
@@ -317,13 +336,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         addPlaneRigidBody(new float[]{0, 1, 0}, FLOOR_DEPTH);
     }
 
-    private void loadHand() {
-        mHand = loadSprite(77, R.raw.hand_withtexture, new float[]{0.4f, 0.4f, 0.4f, 1.0f});
+    private float[] getInitialHandPositionMatrix() {
         float[] origin = mHand.getOrigin();
-
-        mHandXTranslation = 0 - origin[0];
-        mHandYTranslation = HAND_DEPTH - origin[1];
-
         float[] modelMatrix = mHand.getModelMatrix();
         Matrix.setIdentityM(modelMatrix, 0);
         Matrix.translateM(modelMatrix,
@@ -332,6 +346,17 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                 mHandYTranslation,
                 MIN_Z_DISPLACEMENT - origin[2]);
 
+        return modelMatrix;
+    }
+
+    private void loadHand() {
+        mHand = loadSprite(77, R.raw.hand_withtexture, new float[]{0.4f, 0.4f, 0.4f, 1.0f});
+        float[] origin = mHand.getOrigin();
+
+        mHandXTranslation = 0 - origin[0];
+        mHandYTranslation = HAND_DEPTH - origin[1];
+
+        float[] modelMatrix = getInitialHandPositionMatrix();
         mHand.setModelMatrix(modelMatrix);
         addBoxShapeRigidBody(mHand, HAND_MASS, true);
     }
@@ -342,6 +367,29 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         System.arraycopy(axis, 0, copy, 0, copy.length);
 
         Matrix.multiplyMV(axis, 0, matrix, 0, copy, 0);
+    }
+
+    private void recenterHand() {
+        float[] matrix = getInitialHandPositionMatrix();
+
+        btRigidBody body = mSpriteBodyMap.get(mHand);
+        synchronized (mHand) {
+            // reset axis
+            mRingXAxis[0] = 1;
+            mRingXAxis[1] = mRingXAxis[2] = mRingXAxis[3] = 0;
+
+            mRingYAxis[1] = 1;
+            mRingYAxis[0] = mRingYAxis[2] = mRingYAxis[3] = 0;
+
+            mRingZAxis[2] = 1;
+            mRingZAxis[0] = mRingZAxis[1] = mRingZAxis[3] = 0;
+
+            // Clear transforms
+            mHandTransforms.clear();
+
+            body.getMotionState().setWorldTransform(new Matrix4(matrix));
+            body.setActivationState(Collision.ACTIVE_TAG);
+        }
     }
 
     private void moveHand(Pose6DEvent event) {
