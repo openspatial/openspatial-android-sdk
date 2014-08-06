@@ -104,6 +104,10 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private final Queue<Pose6DEvent> mHandTransforms = new ConcurrentLinkedQueue<Pose6DEvent>();
     private final List<Sprite> mSprites = new LinkedList<Sprite>();
 
+    private final Map<Constants.PieceType, ObjectModel> mWhitePieces = new HashMap<Constants.PieceType, ObjectModel>();
+    private final Map<Constants.PieceType, ObjectModel> mBlackPieces = new HashMap<Constants.PieceType, ObjectModel>();
+    private final Map<Constants.SquareColor, ObjectModel> mTiles = new HashMap<Constants.SquareColor, ObjectModel>();
+
     private boolean mStart = false;
     volatile private boolean mLoaded = false;
 
@@ -241,6 +245,38 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         return objectModel;
     }
 
+    ObjectModel loadTile(Constants.SquareColor color) {
+        ObjectModel model = mTiles.get(color);
+
+        if (model == null) {
+            model = loadSprite(R.raw.tile, Constants.getSquareColor(color));
+
+            mTiles.put(color, model);
+        }
+
+        return model;
+    }
+
+    ObjectModel loadPiece(Constants.PieceType type, Constants.PieceColor color) {
+        Map<Constants.PieceType, ObjectModel> map;
+
+        if (color == Constants.PieceColor.BLACK) {
+            map = mBlackPieces;
+        } else {
+            map = mWhitePieces;
+        }
+
+        ObjectModel model = map.get(type);
+
+        if (model == null) {
+            model = loadSprite(Constants.getResourceIdForPiece(type), Constants.getPieceColor(color));
+
+            map.put(type, model);
+        }
+
+        return model;
+    }
+
     private void loadBoard() {
         mXTranslationPerCol = mZTranslationPerRow = 0;
 
@@ -249,8 +285,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
             float xTrans = -mXTranslationPerCol * (Board.SIZE + 1) / 2;
             for (int col = 0; col < Board.SIZE; ++col) {
                 Board.Square square = mBoard.getSquare(row, col);
-                Sprite tile = new Sprite(
-                        loadSprite(R.raw.tile, Constants.getSquareColor(square.tile.color)));
+                Sprite tile = new Sprite(loadTile(square.tile.color));
 
                 if (mXTranslationPerCol == 0) {
                     mXTranslationPerCol = tile.getWidth();
@@ -272,8 +307,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                 mSprites.add(tile);
 
                 if (square.piece != null) {
-                    Sprite piece = new Sprite(loadSprite(Constants.getResourceIdForPiece(square.piece.type),
-                            Constants.getPieceColor(square.piece.color)));
+                    Sprite piece = new Sprite(loadPiece(square.piece.type, square.piece.color));
 
                     modelMatrix = new float[16];
                     float[] halfExtents = piece.getHalfExtents();
