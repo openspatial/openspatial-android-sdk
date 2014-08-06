@@ -23,9 +23,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.IBinder;
+import android.os.*;
 import android.util.Log;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
@@ -45,6 +43,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -104,7 +103,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
     private Timer mPhysicsTimerThread;
 
-    private final Map<Sprite, btRigidBody> mSpriteBodyMap = new HashMap<Sprite, btRigidBody>();
+    private final ConcurrentHashMap<Sprite, btRigidBody> mSpriteBodyMap = new ConcurrentHashMap<Sprite, btRigidBody>();
     private final Queue<Pose6DEvent> mHandTransforms = new ConcurrentLinkedQueue<Pose6DEvent>();
 
     private float[] mRingXAxis = new float[] {1, 0, 0, 0};
@@ -112,6 +111,9 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private float[] mRingZAxis = new float[] {0, 0, 1, 0};
 
     private boolean mStart = false;
+    volatile private boolean mLoaded = false;
+
+    private Handler mVrHandler;
 
     OpenSpatialService mOpenSpatialService;
     private ServiceConnection mOpenSpatialServiceConnection = new ServiceConnection() {
@@ -435,8 +437,14 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     }
 
     private void loadWorld() {
-        loadBoard();
-        loadHand();
+        mVrHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                loadBoard();
+                loadHand();
+                mLoaded = true;
+            }
+        });
 
         mPhysicsTimerThread.scheduleAtFixedRate(new TimerTask() {
             private long lastRun = System.currentTimeMillis();
@@ -444,42 +452,53 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
             @Override
             public void run() {
                 long curTime = System.currentTimeMillis();
-
-                mDynamicsWorld.stepSimulation(((float) (curTime - lastRun)) / 1000);
+                final float timeInterval = ((float)(curTime - lastRun)) / 1000;
                 lastRun = curTime;
 
-                for (Sprite s : mSpriteBodyMap.keySet()) {
-                    btRigidBody body = mSpriteBodyMap.get(s);
-                    Matrix4 bodyTransform = new Matrix4();
-                    body.getMotionState().getWorldTransform(bodyTransform);
+                mVrHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mDynamicsWorld.stepSimulation(timeInterval);
 
-                    synchronized (s) {
-                        s.setModelMatrix(bodyTransform.getValues());
+                        for (Sprite s : mSpriteBodyMap.keySet()) {
+                            btRigidBody body = mSpriteBodyMap.get(s);
+                            Matrix4 bodyTransform = new Matrix4();
+                            body.getMotionState().getWorldTransform(bodyTransform);
+
+                            synchronized (s) {
+                                s.setModelMatrix(bodyTransform.getValues());
+                            }
+                        }
+
+                        // Process any hand updates
+                        processHandUpdates();
                     }
-                }
-
-                // Process any hand updates
-                processHandUpdates();
+                });
             }
         }, 2000, 17); // 60Hz
     }
 
     private void bulletInit() {
-        Bullet.init();
+        mVrHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Bullet.init();
 
-        mCollisionConfiguration = new btDefaultCollisionConfiguration();
-        mDispatcher = new btCollisionDispatcher(mCollisionConfiguration);
-        mBroadphase = new btDbvtBroadphase();
-        mSolver = new btSequentialImpulseConstraintSolver();
+                mCollisionConfiguration = new btDefaultCollisionConfiguration();
+                mDispatcher = new btCollisionDispatcher(mCollisionConfiguration);
+                mBroadphase = new btDbvtBroadphase();
+                mSolver = new btSequentialImpulseConstraintSolver();
 
-        mDynamicsWorld = new btDiscreteDynamicsWorld(
-                mDispatcher,
-                mBroadphase,
-                mSolver,
-                mCollisionConfiguration);
+                mDynamicsWorld = new btDiscreteDynamicsWorld(
+                        mDispatcher,
+                        mBroadphase,
+                        mSolver,
+                        mCollisionConfiguration);
 
-        // No gravity
-        mDynamicsWorld.setGravity(new Vector3(0, -10, 0));
+                // No gravity
+                mDynamicsWorld.setGravity(new Vector3(0, -10, 0));
+            }
+        });
     }
 
     /**
@@ -502,12 +521,17 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         mModelView = new float[16];
         mHeadView = new float[16];
 
+        HandlerThread t = new HandlerThread("VR thread");
+        t.start();
+
+        mVrHandler = new Handler(t.getLooper());
+
         mBoard = new Board();
         mBoard.init();
+        mPhysicsTimerThread = new Timer();
 
         bulletInit();
-
-        mPhysicsTimerThread = new Timer();
+        loadWorld();
 
         bindService(new Intent(this, OpenSpatialService.class), mOpenSpatialServiceConnection, BIND_AUTO_CREATE);
     }
@@ -550,8 +574,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
         checkGLError("onSurfaceCreated");
-
-        loadWorld();
     }
 
     /**
@@ -671,6 +693,10 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     }
 
     private void drawWorld() {
+        if (!mLoaded) {
+            return;
+        }
+
         for (int id : mIdSpriteMap.keySet()) {
             drawObject(mIdSpriteMap.get(id));
         }
