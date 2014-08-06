@@ -24,6 +24,7 @@ import android.content.ServiceConnection;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.os.*;
+import android.os.Process;
 import android.util.Log;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
@@ -463,7 +464,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         mModelView = new float[16];
         mHeadView = new float[16];
 
-        HandlerThread t = new HandlerThread("VR thread");
+        HandlerThread t = new HandlerThread("VR thread", Process.THREAD_PRIORITY_DISPLAY);
         t.start();
 
         mVrHandler = new Handler(t.getLooper());
