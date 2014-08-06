@@ -43,7 +43,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -87,7 +86,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private float[] mPerspective;
 
     private Board mBoard;
-    private final Map<Integer, Sprite> mIdSpriteMap = new HashMap<Integer, Sprite>();
     private float mXTranslationPerCol;
     private float mZTranslationPerRow;
     private Sprite mHand;
@@ -103,12 +101,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
     private Timer mPhysicsTimerThread;
 
-    private final ConcurrentHashMap<Sprite, btRigidBody> mSpriteBodyMap = new ConcurrentHashMap<Sprite, btRigidBody>();
     private final Queue<Pose6DEvent> mHandTransforms = new ConcurrentLinkedQueue<Pose6DEvent>();
-
-    private float[] mRingXAxis = new float[] {1, 0, 0, 0};
-    private float[] mRingYAxis = new float[] {0, 1, 0, 0};
-    private float[] mRingZAxis = new float[] {0, 0, 1, 0};
+    private final List<Sprite> mSprites = new LinkedList<Sprite>();
 
     private boolean mStart = false;
     volatile private boolean mLoaded = false;
@@ -227,41 +221,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         }
     }
 
-    private void addRigidBody(Sprite sprite, btCollisionShape shape, float mass, boolean kinematic) {
-        btDefaultMotionState motionState = new btDefaultMotionState(new Matrix4(sprite.getModelMatrix()));
-
-        Vector3 inertia = new Vector3();
-        shape.calculateLocalInertia(mass, inertia);
-
-        btRigidBody.btRigidBodyConstructionInfo info =
-                new btRigidBody.btRigidBodyConstructionInfo(mass, motionState, shape, inertia);
-        btRigidBody body = new btRigidBody(info);
-
-        if (kinematic) {
-            body.setCollisionFlags(body.getCollisionFlags() | btCollisionObject.CollisionFlags.CF_KINEMATIC_OBJECT);
-            body.setActivationState(Collision.DISABLE_DEACTIVATION);
-        }
-
-        mDynamicsWorld.addRigidBody(body);
-
-        if (mass != 0) {
-            // Add only if dynamic body since static bodies won't be transformed
-            mSpriteBodyMap.put(sprite, body);
-        }
-    }
-
-    private void addBoxShapeRigidBody(Sprite sprite, float mass, boolean kinematic) {
-        btCollisionShape shape = new btBoxShape(new Vector3(sprite.getHalfExtents()));
-
-        addRigidBody(sprite, shape, mass, kinematic);
-    }
-
-    private void addConvexHullRigidBody(Sprite sprite, float mass, boolean kinematic) {
-        btCollisionShape shape = new btConvexHullShape(sprite.getVertices());
-
-        addRigidBody(sprite, shape, mass, kinematic);
-    }
-
     private void addPlaneRigidBody(final float[] normal, final float constant) {
         btCollisionShape shape = new btStaticPlaneShape(new Vector3(normal[0], normal[1], normal[2]), constant);
 
@@ -274,14 +233,12 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         mDynamicsWorld.addRigidBody(body);
     }
 
-    private Sprite loadSprite(int id, int resource, float[] color) {
-        Sprite sprite = new Sprite(this, resource);
-        sprite.setColor(color);
-        sprite.load();
+    private ObjectModel loadSprite(int resource, float[] color) {
+        ObjectModel objectModel = new ObjectModel(this, resource);
+        objectModel.setColor(color);
+        objectModel.load();
 
-        mIdSpriteMap.put(id, sprite);
-
-        return sprite;
+        return objectModel;
     }
 
     private void loadBoard() {
@@ -292,33 +249,33 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
             float xTrans = -mXTranslationPerCol * (Board.SIZE + 1) / 2;
             for (int col = 0; col < Board.SIZE; ++col) {
                 Board.Square square = mBoard.getSquare(row, col);
-                Sprite tile = loadSprite(square.tile.id, R.raw.tile, Constants.getSquareColor(square.tile.color));
+                Sprite tile = new Sprite(
+                        loadSprite(R.raw.tile, Constants.getSquareColor(square.tile.color)));
 
                 if (mXTranslationPerCol == 0) {
-                    mXTranslationPerCol = tile.getMaxX() - tile.getMinX();
-                    mZTranslationPerRow = tile.getMaxZ() - tile.getMinZ();
+                    mXTranslationPerCol = tile.getWidth();
+                    mZTranslationPerRow = tile.getDepth();
                     xTrans = -mXTranslationPerCol * (Board.SIZE + 1) / 2;
                 }
 
                 xTrans += mXTranslationPerCol;
 
-                float[] modelMatrix = tile.getModelMatrix();
+                float[] modelMatrix = new float[16];
                 Matrix.setIdentityM(modelMatrix, 0);
                 Matrix.translateM(modelMatrix,
                         0,
                         xTrans,
                         FLOOR_DEPTH,
                         zTrans);
-                tile.setModelMatrix(modelMatrix);
-
-                addBoxShapeRigidBody(tile, 0, false); // Tiles are not dynamic, so 0 mass
+                tile.makeBoxShapeRigidBody(0, false, modelMatrix); // Tiles are not dynamic, so 0 mass
+                mDynamicsWorld.addRigidBody(tile.getRigidBody());
+                mSprites.add(tile);
 
                 if (square.piece != null) {
-                    Sprite piece = loadSprite(square.piece.id,
-                            Constants.getResourceIdForPiece(square.piece.type),
-                            Constants.getPieceColor(square.piece.color));
+                    Sprite piece = new Sprite(loadSprite(Constants.getResourceIdForPiece(square.piece.type),
+                            Constants.getPieceColor(square.piece.color)));
 
-                    modelMatrix = piece.getModelMatrix();
+                    modelMatrix = new float[16];
                     float[] halfExtents = piece.getHalfExtents();
                     Matrix.setIdentityM(modelMatrix, 0);
                     Matrix.translateM(modelMatrix,
@@ -327,20 +284,22 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                             FLOOR_DEPTH + halfExtents[1],
                             zTrans);
 
-                    piece.setModelMatrix(modelMatrix);
-                    addBoxShapeRigidBody(piece, PIECE_MASS, false);
+                    piece.makeBoxShapeRigidBody(PIECE_MASS, false, modelMatrix);
+                    mDynamicsWorld.addRigidBody(piece.getRigidBody());
+                    mSprites.add(piece);
                 }
             }
 
             zTrans -= mZTranslationPerRow;
         }
 
+        // Add a plane so that pieces don't fall into an abyss
         addPlaneRigidBody(new float[]{0, 1, 0}, FLOOR_DEPTH);
     }
 
     private float[] getInitialHandPositionMatrix() {
         float[] origin = mHand.getOrigin();
-        float[] modelMatrix = mHand.getModelMatrix();
+        float[] modelMatrix = new float[16];
         Matrix.setIdentityM(modelMatrix, 0);
         Matrix.translateM(modelMatrix,
                 0,
@@ -352,45 +311,28 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     }
 
     private void loadHand() {
-        mHand = loadSprite(77, R.raw.hand_withtexture, new float[]{0.4f, 0.4f, 0.4f, 1.0f});
+        mHand = new Sprite(loadSprite(R.raw.hand_withtexture, new float[]{0.4f, 0.4f, 0.4f, 1.0f}));
         float[] origin = mHand.getOrigin();
 
         mHandXTranslation = 0 - origin[0];
         mHandYTranslation = HAND_DEPTH - origin[1];
 
         float[] modelMatrix = getInitialHandPositionMatrix();
-        mHand.setModelMatrix(modelMatrix);
-        addBoxShapeRigidBody(mHand, HAND_MASS, true);
-    }
+        mHand.makeBoxShapeRigidBody(HAND_MASS, true, modelMatrix);
 
-    private void transformAxis(float[] axis, float[] matrix) {
-        float[] copy = new float[4];
-
-        System.arraycopy(axis, 0, copy, 0, copy.length);
-
-        Matrix.multiplyMV(axis, 0, matrix, 0, copy, 0);
+        mDynamicsWorld.addRigidBody(mHand.getRigidBody());
+        mSprites.add(mHand);
     }
 
     private void recenterHand() {
-        float[] matrix = getInitialHandPositionMatrix();
-
-        btRigidBody body = mSpriteBodyMap.get(mHand);
         synchronized (mHand) {
             // reset axis
-            mRingXAxis[0] = 1;
-            mRingXAxis[1] = mRingXAxis[2] = mRingXAxis[3] = 0;
-
-            mRingYAxis[1] = 1;
-            mRingYAxis[0] = mRingYAxis[2] = mRingYAxis[3] = 0;
-
-            mRingZAxis[2] = 1;
-            mRingZAxis[0] = mRingZAxis[1] = mRingZAxis[3] = 0;
+            mHand.resetAxes();
 
             // Clear transforms
             mHandTransforms.clear();
 
-            body.getMotionState().setWorldTransform(new Matrix4(matrix));
-            body.setActivationState(Collision.ACTIVE_TAG);
+            mHand.setOrientation(getInitialHandPositionMatrix());
         }
     }
 
@@ -400,31 +342,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         float yrot = getDegrees((float)eulerAngle.yaw);
         float zrot = -getDegrees((float)eulerAngle.roll);
 
-        btRigidBody body = mSpriteBodyMap.get(mHand);
-        body.getWorldTransform();
-        Matrix4 currentTransform = new Matrix4();
-        body.getMotionState().getWorldTransform(currentTransform);
-        float[] values = currentTransform.getValues();
-        float[] transform = new float[16];
-
-        Matrix.setIdentityM(transform, 0);
-        Matrix.translateM(transform, 0, mHandXTranslation, mHandYTranslation, 0);
-        Matrix.rotateM(transform, 0, xrot, mRingXAxis[0], mRingXAxis[1], mRingXAxis[2]);
-        Matrix.rotateM(transform, 0, yrot, mRingYAxis[0], mRingYAxis[1], mRingYAxis[2]);
-
-        // Rotate the axes before applying roll since the ring gives us pitch and yaw
-        // regardless of which way is up
-        transformAxis(mRingXAxis, transform);
-        transformAxis(mRingYAxis, transform);
-        transformAxis(mRingZAxis, transform);
-
-        Matrix.rotateM(transform, 0, zrot, mRingZAxis[0], mRingZAxis[1], mRingZAxis[2]);
-        Matrix.translateM(transform, 0, -mHandXTranslation, -mHandYTranslation, 0);
-
-        float[] result = new float[16];
-        Matrix.multiplyMM(result, 0, transform, 0, values, 0);
-        body.getMotionState().setWorldTransform(new Matrix4(result));
-        body.setActivationState(Collision.ACTIVE_TAG);
+        mHand.rotateAboutPoint(mHandXTranslation, mHandYTranslation, 0, zrot, xrot, yrot);
     }
 
     private void processHandUpdates() {
@@ -459,16 +377,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                     @Override
                     public void run() {
                         mDynamicsWorld.stepSimulation(timeInterval);
-
-                        for (Sprite s : mSpriteBodyMap.keySet()) {
-                            btRigidBody body = mSpriteBodyMap.get(s);
-                            Matrix4 bodyTransform = new Matrix4();
-                            body.getMotionState().getWorldTransform(bodyTransform);
-
-                            synchronized (s) {
-                                s.setModelMatrix(bodyTransform.getValues());
-                            }
-                        }
 
                         // Process any hand updates
                         processHandUpdates();
@@ -660,7 +568,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         float[] modelMatrix;
 
         synchronized (sprite) {
-            modelMatrix = sprite.getModelMatrix();
+            modelMatrix = sprite.getOrientation();
         }
 
         // Set the Model in the shader, used to calculate lighting
@@ -676,19 +584,19 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
         // Set the position of the cube
         GLES20.glVertexAttribPointer(mPositionParam, COORDS_PER_VERTEX, GLES20.GL_FLOAT,
-                false, 0, sprite.getVertices());
+                false, 0, sprite.getObjectModel().getVertices());
 
         // Set the ModelViewProjection matrix in the shader.
         GLES20.glUniformMatrix4fv(mModelViewProjectionParam, 1, false, mModelViewProjection, 0);
 
         // Set the normal positions of the cube, again for shading
         GLES20.glVertexAttribPointer(mNormalParam, 3, GLES20.GL_FLOAT,
-                false, 0, sprite.getNormals());
+                false, 0, sprite.getObjectModel().getNormals());
 
         GLES20.glVertexAttribPointer(mColorParam, 4, GLES20.GL_FLOAT, false,
-                0, sprite.getColors());
+                0, sprite.getObjectModel().getColors());
 
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, sprite.getNumFaces() * 3);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, sprite.getObjectModel().getNumFaces() * 3);
         checkGLError("Drawing cube");
     }
 
@@ -697,8 +605,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
             return;
         }
 
-        for (int id : mIdSpriteMap.keySet()) {
-            drawObject(mIdSpriteMap.get(id));
+        for (Sprite sprite : mSprites) {
+            drawObject(sprite);
         }
     }
 }
