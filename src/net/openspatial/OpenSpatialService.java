@@ -26,7 +26,6 @@ import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.Parcelable;
 import android.util.Log;
 
 import java.util.*;
@@ -51,9 +50,10 @@ public class OpenSpatialService extends Service {
                 return;
             }
 
-            if (action.equals(OpenSpatialConstants.OPENSPATIAL_DEVICE_CONNECTED_INTENT_ACTION)) {
+            if (action.equals(OpenSpatialConstants.OPENSPATIAL_DEVICE_CONNECTED_INTENT_ACTION) ||
+                    action.equals(OpenSpatialConstants.OPENSPATIAL_DEVICE_DISCONNECTED_INTENT_ACTION)) {
                 Log.d(TAG, "Got device connected event");
-                processDeviceConnectedIntent(intent);
+                processDeviceConnectionIntent(intent);
             } else {
                 processEventIntent(intent);
             }
@@ -178,6 +178,7 @@ public class OpenSpatialService extends Service {
 
         IntentFilter connectedDevicesfilter = new IntentFilter();
         connectedDevicesfilter.addAction(OpenSpatialConstants.OPENSPATIAL_DEVICE_CONNECTED_INTENT_ACTION);
+        connectedDevicesfilter.addAction(OpenSpatialConstants.OPENSPATIAL_DEVICE_DISCONNECTED_INTENT_ACTION);
         registerReceiver(mEventReceiver, connectedDevicesfilter);
 
     }
@@ -380,14 +381,18 @@ public class OpenSpatialService extends Service {
         }
     }
 
-    private void processDeviceConnectedIntent(Intent intent) {
+    private void processDeviceConnectionIntent(Intent intent) {
         BluetoothDevice device = intent.getParcelableExtra(OpenSpatialConstants.BLUETOOTH_DEVICE);
         if (device == null) {
             Log.e(TAG, "Got device connected intent with no device");
             return;
         }
 
-        mServiceCallback.deviceConnected(device);
+        if (intent.getAction().equals(OpenSpatialConstants.OPENSPATIAL_DEVICE_CONNECTED_INTENT_ACTION)) {
+            mServiceCallback.deviceConnected(device);
+        } else if (intent.getAction().equals(OpenSpatialConstants.OPENSPATIAL_DEVICE_DISCONNECTED_INTENT_ACTION)) {
+            mServiceCallback.deviceDisconnected(device);
+        }
     }
 
     public class OpenSpatialServiceBinder extends Binder {
@@ -422,6 +427,7 @@ public class OpenSpatialService extends Service {
 
     public interface OpenSpatialServiceCallback {
         public void deviceConnected(BluetoothDevice device);
+        public void deviceDisconnected(BluetoothDevice device);
         public void buttonEventRegistrationResult(BluetoothDevice device, int status);
         public void pointerEventRegistrationResult(BluetoothDevice device, int status);
         public void pose6DEventRegistrationResult(BluetoothDevice device, int status);

@@ -174,6 +174,11 @@ public class MainScreenActivity extends Activity implements OpenSpatialService.O
     }
 
     @Override
+    public void deviceDisconnected(BluetoothDevice device) {
+        Toast.makeText(this, device.getName() + "disconnected", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
     public void buttonEventRegistrationResult(BluetoothDevice device, int status) {
         Toast.makeText(this, "ButtonEvent registration status: " + status, Toast.LENGTH_SHORT).show();
     }

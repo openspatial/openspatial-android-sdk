@@ -65,6 +65,8 @@ public class OpenSpatialConstants {
             "net.openspatial.OPENSPATIAL_GESTURE_EVENT_INTENT_ACTION";
     public static final String OPENSPATIAL_DEVICE_CONNECTED_INTENT_ACTION =
             "net.openspatial.OPENSPATIAL_DEVICE_CONNECTED_INTENT_ACTION";
+    public static final String OPENSPATIAL_DEVICE_DISCONNECTED_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_DEVICE_DISCONNECTED_INTENT_ACTION";
 
     public static final String OPENSPATIAL_REGISTER_BUTTON_EVENT_RESULT =
             "net.openspatial.OPENSPATIAL_REGISTER_BUTTON_EVENT_RESULT";
