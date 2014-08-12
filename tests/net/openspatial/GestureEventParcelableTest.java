@@ -35,7 +35,7 @@ public class GestureEventParcelableTest {
 
     @Before
     public void setUp() {
-        mGestureEvent = new GestureEvent(GestureEvent.GestureEventType.SWIPE_LEFT, 7.7);
+        mGestureEvent = new GestureEvent(null, GestureEvent.GestureEventType.SWIPE_LEFT, 7.7);
     }
 
     @After

@@ -32,7 +32,7 @@ public class Pose6DEventParcelableTest {
 
     @Before
     public void setUp() {
-        mPose6DEvent = new Pose6DEvent(7, 8, 9, 0.111f, 0.222f, 0.333f);
+        mPose6DEvent = new Pose6DEvent(null, 7, 8, 9, 0.111f, 0.222f, 0.333f);
     }
 
     @After
@@ -40,7 +40,6 @@ public class Pose6DEventParcelableTest {
         mPose6DEvent = null;
     }
 
-    @Ignore
     @Test
     public void testParceling() {
         Parcel p = Parcel.obtain();
@@ -52,9 +51,11 @@ public class Pose6DEventParcelableTest {
         Assert.assertNotNull(event);
         Assert.assertEquals(mPose6DEvent.eventType, event.eventType);
         Assert.assertEquals(mPose6DEvent.timestamp, event.timestamp);
-        Assert.assertEquals(mPose6DEvent.getQuaternion().x, event.getQuaternion().x, 0);
-        Assert.assertEquals(mPose6DEvent.getQuaternion().y, event.getQuaternion().y, 0);
-        Assert.assertEquals(mPose6DEvent.getQuaternion().z, event.getQuaternion().z, 0);
-        Assert.assertEquals(mPose6DEvent.getQuaternion().w, event.getQuaternion().w, 0);
+        Assert.assertEquals(mPose6DEvent.x, event.x, 0);
+        Assert.assertEquals(mPose6DEvent.y, event.y, 0);
+        Assert.assertEquals(mPose6DEvent.z, event.z, 0);
+        Assert.assertEquals(mPose6DEvent.roll, event.roll, 0);
+        Assert.assertEquals(mPose6DEvent.pitch, event.pitch, 0);
+        Assert.assertEquals(mPose6DEvent.yaw, event.yaw, 0);
     }
 }

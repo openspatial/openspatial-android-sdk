@@ -35,7 +35,7 @@ public class PointerEventParcelableTest {
 
     @Before
     public void setUp() {
-        mPointerEvent = new PointerEvent(PointerEvent.PointerEventType.RELATIVE, 77, -99);
+        mPointerEvent = new PointerEvent(null, PointerEvent.PointerEventType.RELATIVE, 77, -99);
     }
 
     @After

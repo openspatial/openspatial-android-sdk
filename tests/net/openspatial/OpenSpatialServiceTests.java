@@ -54,7 +54,7 @@ public class OpenSpatialServiceTests {
         mService.registerForButtonEvents(mDevice, mListener);
         mService.registerForPointerEvents(mDevice, mListener);
         mService.registerForPose6DEvents(mDevice, mListener);
-        mService.registerForGestureEvents(mDevice, GestureEvent.GestureEventType.SWIPE_UP, mListener);
+        mService.registerForGestureEvents(mDevice, mListener);
     }
 
     @Test(expected = OpenSpatialException.class)
@@ -71,22 +71,16 @@ public class OpenSpatialServiceTests {
     }
 
     @Test
-    public void testMultiGestureRegister() throws OpenSpatialException {
-        mService.registerForGestureEvents(mDevice, GestureEvent.GestureEventType.SWIPE_UP, mListener);
-        mService.registerForGestureEvents(mDevice, GestureEvent.GestureEventType.SWIPE_DOWN, mListener);
-    }
-
-    @Test
     public void testunRegister() throws OpenSpatialException {
         mService.registerForButtonEvents(mDevice, mListener);
         mService.registerForPointerEvents(mDevice, mListener);
         mService.registerForPose6DEvents(mDevice, mListener);
-        mService.registerForGestureEvents(mDevice, GestureEvent.GestureEventType.SWIPE_UP, mListener);
+        mService.registerForGestureEvents(mDevice, mListener);
 
         mService.unRegisterForButtonEvents(mDevice);
         mService.unRegisterForPointerEvents(mDevice);
         mService.unRegisterForPose6DEvents(mDevice);
-        mService.unRegisterForGestureEvents(mDevice, GestureEvent.GestureEventType.SWIPE_UP);
+        mService.unRegisterForGestureEvents(mDevice);
     }
 
     @Test(expected = OpenSpatialException.class)
@@ -108,7 +102,7 @@ public class OpenSpatialServiceTests {
     public void testButtonEventDelivery() throws OpenSpatialException {
         mService.registerForButtonEvents(mDevice, mListener);
 
-        final ButtonEvent sendEvent = new ButtonEvent(ButtonEvent.ButtonEventType.TOUCH1_UP);
+        final ButtonEvent sendEvent = new ButtonEvent(mDevice, ButtonEvent.ButtonEventType.TOUCH1_UP);
         Intent i = new Intent();
         i.putExtra(OpenSpatialConstants.BLUETOOTH_DEVICE, mDevice);
         i.putExtra(OpenSpatialConstants.OPENSPATIAL_EVENT, sendEvent);
@@ -129,7 +123,7 @@ public class OpenSpatialServiceTests {
     public void testPointerEventDelivery() throws OpenSpatialException {
         mService.registerForPointerEvents(mDevice, mListener);
 
-        final PointerEvent sendEvent = new PointerEvent(PointerEvent.PointerEventType.RELATIVE, 77, -88);
+        final PointerEvent sendEvent = new PointerEvent(mDevice, PointerEvent.PointerEventType.RELATIVE, 77, -88);
         Intent i = new Intent();
         i.putExtra(OpenSpatialConstants.BLUETOOTH_DEVICE, mDevice);
         i.putExtra(OpenSpatialConstants.OPENSPATIAL_EVENT, sendEvent);
@@ -153,7 +147,7 @@ public class OpenSpatialServiceTests {
     public void testPose6DEventDelivery() throws OpenSpatialException {
         mService.registerForPose6DEvents(mDevice, mListener);
 
-        final Pose6DEvent sendEvent = new Pose6DEvent(1, 2, 3, .444f, .555f, .666f);
+        final Pose6DEvent sendEvent = new Pose6DEvent(mDevice, 1, 2, 3, .444f, .555f, .666f);
         Intent i = new Intent();
         i.putExtra(OpenSpatialConstants.BLUETOOTH_DEVICE, mDevice);
         i.putExtra(OpenSpatialConstants.OPENSPATIAL_EVENT, sendEvent);
@@ -183,9 +177,9 @@ public class OpenSpatialServiceTests {
 
     @Test
     public void testGestureEventDelivery() throws OpenSpatialException {
-        mService.registerForGestureEvents(mDevice, GestureEvent.GestureEventType.SWIPE_DOWN, mListener);
+        mService.registerForGestureEvents(mDevice, mListener);
 
-        final GestureEvent sendEvent = new GestureEvent(GestureEvent.GestureEventType.SWIPE_DOWN, 1.1);
+        final GestureEvent sendEvent = new GestureEvent(mDevice, GestureEvent.GestureEventType.SWIPE_DOWN, 1.1);
         Intent i = new Intent();
         i.putExtra(OpenSpatialConstants.BLUETOOTH_DEVICE, mDevice);
         i.putExtra(OpenSpatialConstants.OPENSPATIAL_EVENT, sendEvent);
@@ -203,11 +197,10 @@ public class OpenSpatialServiceTests {
 
     @Test
     public void testDoubleGestureEventDelivery() throws OpenSpatialException {
-        mService.registerForGestureEvents(mDevice, GestureEvent.GestureEventType.SWIPE_DOWN, mListener);
-        mService.registerForGestureEvents(mDevice, GestureEvent.GestureEventType.SWIPE_UP, mListener);
+        mService.registerForGestureEvents(mDevice, mListener);
 
-        final GestureEvent downEvent = new GestureEvent(GestureEvent.GestureEventType.SWIPE_DOWN, 1.1);
-        final GestureEvent upEvent = new GestureEvent(GestureEvent.GestureEventType.SWIPE_UP, 1.1);
+        final GestureEvent downEvent = new GestureEvent(mDevice, GestureEvent.GestureEventType.SWIPE_DOWN, 1.1);
+        final GestureEvent upEvent = new GestureEvent(mDevice, GestureEvent.GestureEventType.SWIPE_UP, 1.1);
 
         Intent i = new Intent();
         i.putExtra(OpenSpatialConstants.BLUETOOTH_DEVICE, mDevice);

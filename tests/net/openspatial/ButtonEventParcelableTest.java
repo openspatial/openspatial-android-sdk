@@ -35,7 +35,7 @@ public class ButtonEventParcelableTest {
 
     @Before
     public void setUp() {
-        mButtonEvent = new ButtonEvent(ButtonEvent.ButtonEventType.TOUCH1_UP);
+        mButtonEvent = new ButtonEvent(null, ButtonEvent.ButtonEventType.TOUCH1_UP);
     }
 
     @After
