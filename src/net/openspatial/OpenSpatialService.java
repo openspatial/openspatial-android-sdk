@@ -99,6 +99,8 @@ public class OpenSpatialService extends Service {
                 mServiceCallback.gestureEventRegistrationResult(device, status);
             } else if (action.equals(OpenSpatialConstants.OPENSPATIAL_REGISTER_POSE6D_EVENT_RESULT)) {
                 mServiceCallback.pose6DEventRegistrationResult(device, status);
+            } else if (action.equals(OpenSpatialConstants.OPENSPATIAL_REGISTER_MOTION6D_EVENT_RESULT)) {
+                mServiceCallback.motion6DEventRegistrationResult(device, status);
             } else {
                 Log.e(TAG, "Got unknown action: " + action);
             }
@@ -114,6 +116,8 @@ public class OpenSpatialService extends Service {
     private final HashMap<BluetoothDevice, OpenSpatialEvent.EventListener> m3DRotationEventCallbacks =
             new HashMap<BluetoothDevice, OpenSpatialEvent.EventListener>();
     private final HashMap<BluetoothDevice,OpenSpatialEvent.EventListener> mGestureEventCallbacks =
+            new HashMap<BluetoothDevice, OpenSpatialEvent.EventListener>();
+    private final HashMap<BluetoothDevice, OpenSpatialEvent.EventListener> mMotion6DEventCallbacks =
             new HashMap<BluetoothDevice, OpenSpatialEvent.EventListener>();
 
     private String mIdentifier;
@@ -174,6 +178,7 @@ public class OpenSpatialService extends Service {
         filter.addAction(OpenSpatialConstants.OPENSPATIAL_REGISTER_GESTURE_EVENT_RESULT);
         filter.addAction(OpenSpatialConstants.OPENSPATIAL_REGISTER_POINTER_EVENT_RESULT);
         filter.addAction(OpenSpatialConstants.OPENSPATIAL_REGISTER_POSE6D_EVENT_RESULT);
+        filter.addAction(OpenSpatialConstants.OPENSPATIAL_REGISTER_MOTION6D_EVENT_RESULT);
         registerReceiver(mResultReceiver, filter);
 
         IntentFilter connectedDevicesfilter = new IntentFilter();
@@ -270,6 +275,27 @@ public class OpenSpatialService extends Service {
     }
 
     /**
+     * Register for {@link net.openspatial.Motion6DEvent}s from the specified {@code device}
+     * @param device The device to listen for {@code Motion6DEvent}s from. This is an instance of
+     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
+     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     * @param listener An instance of {@link net.openspatial.OpenSpatialEvent.EventListener}. When an
+     *                 {@link net.openspatial.OpenSpatialEvent} is received, the {@code onEventReceived} method is
+     *                 called
+     */
+    public void registerForMotion6DEvents(BluetoothDevice device, OpenSpatialEvent.EventListener listener)
+            throws OpenSpatialException {
+        synchronized (mMotion6DEventCallbacks) {
+            registerCallback(mMotion6DEventCallbacks, device, listener);
+        }
+
+        IntentFilter filter = new IntentFilter(OpenSpatialConstants.OPENSPATIAL_MOTION6D_EVENT_INTENT_ACTION);
+        registerReceiver(mEventReceiver, filter);
+
+        sendIntent(device, OpenSpatialConstants.OPENSPATIAL_REGISTER_MOTION6D_EVENT_INTENT_ACTION);
+    }
+
+    /**
      * Unregister for {@link net.openspatial.ButtonEvent}s from the specified {@code device}
      * @param device The device to stop listening for {@code ButtonEvent}s from. This is an instance of
      *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
@@ -328,6 +354,20 @@ public class OpenSpatialService extends Service {
     }
 
     /**
+     * Unregister for {@link net.openspatial.Motion6DEvent}s from the specified {@code device}
+     * @param device The device to stop listening for {@code Motion6DEvents}s from. This is an instance of
+     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
+     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     */
+    public void unRegisterForMotion6DEvents(BluetoothDevice device) throws OpenSpatialException {
+        sendIntent(device, OpenSpatialConstants.OPENSPATIAL_UNREGISTER_MOTION6D_EVENT_INTENT_ACTION);
+
+        synchronized (mMotion6DEventCallbacks) {
+            unRegisterCallback(mMotion6DEventCallbacks, device);
+        }
+    }
+
+    /**
      * Get a list of connected devices
      *
      * This call requests a list of connected devices. The result is communicated via the {@code deviceListUpdated}
@@ -361,11 +401,15 @@ public class OpenSpatialService extends Service {
                     }
                     break;
                 case EVENT_GESTURE:
-                    GestureEvent gEvent = (GestureEvent)event;
                     synchronized (mGestureEventCallbacks) {
                         listener = mGestureEventCallbacks.get(event.device);
                     }
                     break;
+                case EVENT_MOTION6D:
+                    synchronized (mMotion6DEventCallbacks) {
+                        listener = mMotion6DEventCallbacks.get(event.device);
+                        break;
+                    }
                 default:
                     Log.e(TAG, "Unsupported event type: " + event.eventType);
             }
@@ -432,5 +476,6 @@ public class OpenSpatialService extends Service {
         public void pointerEventRegistrationResult(BluetoothDevice device, int status);
         public void pose6DEventRegistrationResult(BluetoothDevice device, int status);
         public void gestureEventRegistrationResult(BluetoothDevice device, int status);
+        public void motion6DEventRegistrationResult(BluetoothDevice device, int status);
     }
 }

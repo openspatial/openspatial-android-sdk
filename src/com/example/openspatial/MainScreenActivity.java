@@ -127,6 +127,24 @@ public class MainScreenActivity extends Activity implements OpenSpatialService.O
             Log.e(TAG, "Error registering for Pose6DEvent " + e);
         }
 
+        try {
+            mOpenSpatialService.registerForMotion6DEvents(device, new OpenSpatialEvent.EventListener() {
+                @Override
+                public void onEventReceived(OpenSpatialEvent event) {
+                    Motion6DEvent motion6DEvent = (Motion6DEvent) event;
+                    Log.d(TAG, "Motion6D: " +
+                            motion6DEvent.accelX + ", " +
+                            motion6DEvent.accelY + ", " +
+                            motion6DEvent.accelZ + ", " +
+                            motion6DEvent.gyroX + ", " +
+                            motion6DEvent.gyroY + ", " +
+                            motion6DEvent.gyroZ);
+                }
+            });
+        } catch (OpenSpatialException e) {
+            Log.e(TAG, "Error registering for Pose6DEvent " + e);
+        }
+
         OpenSpatialEvent.EventListener gestureEventListener = new OpenSpatialEvent.EventListener() {
             @Override
             public void onEventReceived(OpenSpatialEvent event) {
@@ -196,5 +214,10 @@ public class MainScreenActivity extends Activity implements OpenSpatialService.O
     @Override
     public void gestureEventRegistrationResult(BluetoothDevice device, int status) {
         Toast.makeText(this, "GestureEvent registration status: " + status, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void motion6DEventRegistrationResult(BluetoothDevice device, int status) {
+        Toast.makeText(this, "Motion6D registration status: " + status, Toast.LENGTH_SHORT).show();
     }
 }

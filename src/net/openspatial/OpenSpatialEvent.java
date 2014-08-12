@@ -50,6 +50,12 @@ abstract public class OpenSpatialEvent implements Parcelable {
          * Gesture event
          */
         EVENT_GESTURE,
+
+        /**
+         * Motion6D event
+         * @see net.openspatial.Motion6DEvent
+         */
+        EVENT_MOTION6D,
     }
 
     /**
