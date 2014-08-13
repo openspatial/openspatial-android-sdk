@@ -462,11 +462,72 @@ public class OpenSpatialService extends Service {
         super.onCreate();
     }
 
+    private void cleanup(Set<BluetoothDevice> devices, OpenSpatialEvent.EventType type) {
+        for (BluetoothDevice device : devices) {
+            try {
+                Log.e(TAG, "Leaked " + type + " registration for " + device.getName());
+
+                switch (type) {
+                    case EVENT_POINTER:
+                        unRegisterForPointerEvents(device);
+                        break;
+                    case EVENT_BUTTON:
+                        unRegisterForButtonEvents(device);
+                        break;
+                    case EVENT_GESTURE:
+                        unRegisterForGestureEvents(device);
+                        break;
+                    case EVENT_POSE6D:
+                        unRegisterForPose6DEvents(device);
+                        break;
+                    case EVENT_MOTION6D:
+                        unRegisterForMotion6DEvents(device);
+                        break;
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to unregister from PointerEvents for " +
+                        device.getName() + " with error: " + e.getMessage());
+            }
+        }
+    }
+
+    private void cleanup() {
+        Set<BluetoothDevice> devices;
+        synchronized (mPointerEventCallbacks) {
+            devices = new HashSet<BluetoothDevice>(mPointerEventCallbacks.keySet());
+        }
+        cleanup(devices, OpenSpatialEvent.EventType.EVENT_POINTER);
+
+        synchronized (mButtonEventCallbacks) {
+            devices = new HashSet<BluetoothDevice>(mButtonEventCallbacks.keySet());
+        }
+        cleanup(devices, OpenSpatialEvent.EventType.EVENT_BUTTON);
+
+        synchronized (mGestureEventCallbacks) {
+            devices = new HashSet<BluetoothDevice>(mGestureEventCallbacks.keySet());
+        }
+        cleanup(devices, OpenSpatialEvent.EventType.EVENT_GESTURE);
+
+        synchronized (m3DRotationEventCallbacks) {
+            devices = new HashSet<BluetoothDevice>(m3DRotationEventCallbacks.keySet());
+        }
+        cleanup(devices, OpenSpatialEvent.EventType.EVENT_POSE6D);
+
+        synchronized (mMotion6DEventCallbacks) {
+            devices = new HashSet<BluetoothDevice>(mMotion6DEventCallbacks.keySet());
+        }
+        cleanup(devices, OpenSpatialEvent.EventType.EVENT_MOTION6D);
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
+
         unregisterReceiver(mEventReceiver);
         unregisterReceiver(mResultReceiver);
+
+        // Cleanup any missing unregisters
+        cleanup();
     }
 
     public interface OpenSpatialServiceCallback {
