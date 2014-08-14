@@ -18,6 +18,7 @@ package net.openspatial;
 
 import android.bluetooth.BluetoothDevice;
 import android.os.Parcel;
+import java.lang.Math;
 
 /**
  * This event represents a transformation in 3D space as rotation and translation deltas across the three axes.
@@ -85,7 +86,23 @@ public class Pose6DEvent extends OpenSpatialEvent {
      * @return The Quaternion representing the rotation
      */
     public Quaternion getQuaternion() {
-        throw new UnsupportedOperationException();
+        if (mQuaternion == null) {
+            double sinHalfYaw = Math.sin(yaw/2);
+            double cosHalfYaw = Math.cos(yaw/2);
+            double sinHalfPitch = Math.sin(pitch/2);
+            double cosHalfPitch = Math.cos(pitch/2);
+            double sinHalfRoll = Math.sin(roll/2);
+            double cosHalfRoll = Math.cos(roll/2);
+
+            double qX = - cosHalfRoll * sinHalfPitch * sinHalfYaw + cosHalfPitch * cosHalfYaw * sinHalfRoll;
+            double qY = cosHalfRoll * cosHalfYaw * sinHalfPitch + sinHalfRoll * cosHalfPitch * sinHalfYaw;
+            double qZ = cosHalfRoll * cosHalfPitch * sinHalfYaw - sinHalfRoll * cosHalfYaw * sinHalfPitch;
+            double qW = cosHalfRoll * cosHalfPitch * cosHalfYaw + sinHalfRoll * sinHalfPitch * sinHalfYaw;
+
+            mQuaternion = new Quaternion(qX, qY, qZ, qW);
+        }
+
+        return mQuaternion;
     }
 
     /**

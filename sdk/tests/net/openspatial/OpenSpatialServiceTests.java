@@ -20,6 +20,7 @@ import android.annotation.TargetApi;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.os.Build;
+import junit.framework.Assert;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
@@ -167,6 +168,18 @@ public class OpenSpatialServiceTests {
                         sendEvent.yaw == event.yaw);
             }
         }));
+    }
+
+    @Test
+    public void testPose6DQuaternionGeneration() {
+        final float DELTA = 0.00001f;
+        final Pose6DEvent event = new Pose6DEvent(mDevice, 0, 0, 0, 0f, (float) Math.PI/2f, (float) Math.PI);
+        Quaternion eventQuat = event.getQuaternion();
+        Quaternion quat = new Quaternion(Math.cos(Math.PI * 3f/4), 0, Math.cos(Math.PI/4), 0);
+        Assert.assertEquals(eventQuat.x, quat.x, DELTA);
+        Assert.assertEquals(eventQuat.y, quat.y, DELTA);
+        Assert.assertEquals(eventQuat.z, quat.z, DELTA);
+        Assert.assertEquals(eventQuat.w, quat.w, DELTA);
     }
 
     private boolean verifyGestureEvent(GestureEvent expected, GestureEvent actual) {
