@@ -49,7 +49,7 @@ public class PointerService extends RoboService {
     private final Map<View, PointerViewCallback> mRegisteredViews = new HashMap<View, PointerViewCallback>();
     private final Map<View, Integer> mViewZindex = new HashMap<View, Integer>();
 
-    private final Map<String, Boolean> mTouch2State = new HashMap<String, Boolean>();
+    private final Map<String, Boolean> mTouch0State = new HashMap<String, Boolean>();
 
     private static final String TAG = PointerService.class.getSimpleName();
 
@@ -90,7 +90,7 @@ public class PointerService extends RoboService {
             @Override
             public void run() {
                 mPointerView.addPointer(pointerId, radius, a, r, g, b, caption);
-                mTouch2State.put(pointerId, false);
+                mTouch0State.put(pointerId, false);
                 mPointerView.invalidate();
             }
         });
@@ -111,7 +111,7 @@ public class PointerService extends RoboService {
             @Override
             public void run() {
                 mPointerView.updatePointerPosition(pointerId, deltaX, deltaY);
-                boolean touch2Down = mTouch2State.get(pointerId);
+                boolean touch2Down = mTouch0State.get(pointerId);
                 if (touch2Down) {
                     Point currentPosition = getCurrentPositionOnScreen(pointerId);
                     PointerViewCallback cb = getCallbackForView(pointerId, currentPosition);
@@ -192,7 +192,7 @@ public class PointerService extends RoboService {
                 View v = getCurrentView(currentPosition);
 
                 PointerViewCallback cb = getCallbackForView(pointerId, v);
-                boolean touch2Down = mTouch2State.get(pointerId);
+                boolean touch0Down = mTouch0State.get(pointerId);
 
                 if (cb != null) {
                     cb.onButtonEvent(pointerId, event, currentPosition.x, currentPosition.y, PointerService.this);
@@ -200,10 +200,10 @@ public class PointerService extends RoboService {
 
                 switch (event.buttonEventType) {
                     case TOUCH0_DOWN:
-                        touch2Down = true;
+                        touch0Down = true;
                         break;
                     case TOUCH0_UP:
-                        if (touch2Down) {
+                        if (touch0Down) {
                             Log.d(TAG, "Sending click event for device " + pointerId);
                             if (cb != null) {
                                 cb.onClick(pointerId, currentPosition.x, currentPosition.y, PointerService.this);
@@ -211,12 +211,12 @@ public class PointerService extends RoboService {
                                 v.callOnClick();
                             }
                         }
-                        touch2Down = false;
+                        touch0Down = false;
                         break;
                     // We don't care about the others (for now anyway)
                 }
 
-                mTouch2State.put(pointerId, touch2Down);
+                mTouch0State.put(pointerId, touch0Down);
             }
         });
     }
