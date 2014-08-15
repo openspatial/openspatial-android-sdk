@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2014, Nod Labs.
+  -->
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.example.glassexample"
+          android:versionCode="1"
+          android:versionName="1.0.1">
+    <uses-sdk android:minSdkVersion="19"/>
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="com.google.android.glass.permission.DEVELOPMENT" />
+
+    <uses-feature android:name="android.hardware.camera" />
+
+    <application android:label="@string/app_name" android:icon="@drawable/nod_logo">
+        <activity android:name="DeviceScanCardActivity"
+                  android:label="@string/app_name"
+                  android:icon="@drawable/nod_logo">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name=
+                            "com.google.android.glass.action.VOICE_TRIGGER" />
+            </intent-filter>
+            <meta-data android:name="com.google.android.glass.VoiceTrigger"
+                       android:resource="@xml/start_nod_connector" />
+        </activity>
+        <activity android:name=".DeviceScrollCardActivity" />
+        <activity android:name=".CameraPreviewActivity"
+            android:noHistory="true"/>
+        <activity android:name=".ImagePreviewActivity" />
+        <activity android:name=".ShareActivity" />
+        <service android:name="net.openspatial.OpenSpatialSingleUserService" />
+        <service android:name="com.nod_labs.pointer.PointerService" />
+        <service android:name=".ReceiverService" />
+    </application>
+</manifest>
