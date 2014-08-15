@@ -33,6 +33,16 @@ public class OpenSpatialException extends Exception {
          * The device is already registered for the given callback
          */
         DEVICE_ALREADY_REGISTERED,
+
+        /**
+         * Bluetooth not supported
+         */
+        BLUETOOTH_NOT_SUPPORTED,
+
+        /**
+         * Bluetooth not on
+         */
+        BLUETOOTH_OFF,
     }
 
     private ErrorCode mErrorCode;
