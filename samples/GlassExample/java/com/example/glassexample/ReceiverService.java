@@ -91,8 +91,18 @@ public class ReceiverService  extends Service
         sendBroadcast(intent);
     }
 
+    private void sendConnectedIntent(BluetoothDevice device) {
+        Intent intent = new Intent();
+        intent.setAction(Constants.ACTION_DEVICE_CONNECTED);
+        intent.putExtra(Constants.EXTRA_DEVICE, device);
+
+        sendBroadcast(intent);
+    }
+
     public void deviceConnected(BluetoothDevice device) {
         Log.d(TAG, mDevice.getName() + " connected.");
+
+        sendConnectedIntent(device);
 
         try {
             mOpenSpatialService.registerForButtonEvents(mDevice, new OpenSpatialEvent.EventListener() {

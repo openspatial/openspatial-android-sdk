@@ -42,8 +42,12 @@ public class CameraPreviewActivity extends Activity {
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            ButtonEvent event = intent.getParcelableExtra(Constants.EXTRA_OPENSPATIAL_EVENT);
-            handleButtonEvent(event);
+            if (intent.getAction().equals(Constants.ACTION_DEVICE_CONNECTED)) {
+                handleDeviceConnectedIntent(intent);
+            } else {
+                ButtonEvent event = intent.getParcelableExtra(Constants.EXTRA_OPENSPATIAL_EVENT);
+                handleButtonEvent(event);
+            }
         }
     };
 
@@ -114,6 +118,7 @@ public class CameraPreviewActivity extends Activity {
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(Constants.ACTION_BUTTON_EVENT);
+        filter.addAction(Constants.ACTION_DEVICE_CONNECTED);
         registerReceiver(mReceiver, filter);
 
         Intent intent = new Intent(getApplicationContext(), ReceiverService.class);
@@ -147,5 +152,10 @@ public class CameraPreviewActivity extends Activity {
             mCanTakePicture = false;
             mCamera.takePicture(null, null, mPictureCallback);
         }
+    }
+
+    private void handleDeviceConnectedIntent(Intent intent) {
+        BluetoothDevice device = intent.getParcelableExtra(Constants.EXTRA_DEVICE);
+        Toast.makeText(this, device.getName() + " connected", Toast.LENGTH_SHORT).show();
     }
 }

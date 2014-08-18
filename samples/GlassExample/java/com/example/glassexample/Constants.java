@@ -1,6 +1,7 @@
 package com.example.glassexample;
 
 public class Constants {
+    public static final String ACTION_DEVICE_CONNECTED = "com.example.glassexample.DEVICE_CONNECTED";
     public static final String ACTION_START_SERVICE = "com.example.glassexample.START_SERVICE";
     public static final String ACTION_BUTTON_EVENT = "com.example.glassexample.BUTTON_EVENT";
     public static final String ACTION_POINTER_EVENT = "com.example.glassexample.EVENT";
