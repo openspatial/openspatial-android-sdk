@@ -102,7 +102,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
     private Timer mPhysicsTimerThread;
 
-    private final Queue<Pose6DEvent> mHandTransforms = new ConcurrentLinkedQueue<Pose6DEvent>();
+    private Pose6DEvent mHandTransform;
     private final List<Sprite> mSprites = new LinkedList<Sprite>();
 
     private final Map<Constants.PieceType, ObjectModel> mWhitePieces = new HashMap<Constants.PieceType, ObjectModel>();
@@ -131,7 +131,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                                     return;
                                 }
 
-                                mHandTransforms.add((Pose6DEvent) event);
+                                mHandTransform = (Pose6DEvent)event;
                             }
                         });
 
@@ -359,13 +359,18 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         mSprites.add(mHand);
     }
 
+    private void repositionHand(Pose6DEvent event) {
+        recenterHand();
+        moveHand(event);
+    }
+
     private void recenterHand() {
         synchronized (mHand) {
             // reset axis
             mHand.resetAxes();
 
             // Clear transforms
-            mHandTransforms.clear();
+            mHandTransform = null;
 
             mHand.setOrientation(getInitialHandPositionMatrix());
         }
@@ -381,11 +386,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     }
 
     private void processHandUpdates() {
-        int numProcessed = 0;
-
-        while (numProcessed++ < EVENTS_PER_ITERATION && !mHandTransforms.isEmpty()) {
-            Pose6DEvent event = mHandTransforms.remove();
-            moveHand(event);
+        if (mHandTransform != null) {
+            repositionHand(mHandTransform);
         }
     }
 
