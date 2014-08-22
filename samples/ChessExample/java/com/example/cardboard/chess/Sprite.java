@@ -118,8 +118,9 @@ public class Sprite {
 
         Matrix.setIdentityM(transform, 0);
         Matrix.translateM(transform, 0, x, y, z);
-        Matrix.rotateM(transform, 0, pitch, mLocalXAxis[0], mLocalXAxis[1], mLocalXAxis[2]);
         Matrix.rotateM(transform, 0, yaw, mLocalYAxis[0], mLocalYAxis[1], mLocalYAxis[2]);
+        Matrix.rotateM(transform, 0, pitch, mLocalXAxis[0], mLocalXAxis[1], mLocalXAxis[2]);
+        Matrix.rotateM(transform, 0, roll, mLocalZAxis[0], mLocalZAxis[1], mLocalZAxis[2]);
 
         // Rotate the axes before applying roll since the ring gives us pitch and yaw
         // regardless of which way is up
@@ -127,7 +128,6 @@ public class Sprite {
         transformAxis(mLocalYAxis, transform);
         transformAxis(mLocalZAxis, transform);
 
-        Matrix.rotateM(transform, 0, roll, mLocalZAxis[0], mLocalZAxis[1], mLocalZAxis[2]);
         Matrix.translateM(transform, 0, -x, -y, -z);
 
         float[] result = new float[16];
