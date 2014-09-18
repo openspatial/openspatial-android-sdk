@@ -85,4 +85,11 @@ public class OpenSpatialConstants {
             "net.openspatial.OPENSPATIAL_REGISTER_POSE6D_EVENT_RESULT";
     public static final String OPENSPATIAL_REGISTER_MOTION6D_EVENT_RESULT =
             "net.openspatial.OPENSPATIAL_REGISTER_MOTION6D_EVENT_RESULT";
+
+    public static final String SKELETAL_LEFT_HAND = "skeletal.LEFT_HAND";
+    public static final String SKELETAL_RIGHT_HAND = "skeletal.RIGHT_HAND";
+    public static final String SKELETAL_LEFT_FOREARM = "skeletal.LEFT_FOREARM";
+    public static final String SKELETAL_RIGHT_FOREARM = "skeletal.RIGHT_FOREARM";
+    public static final String SKELETAL_LEFT_UPPER_ARM = "skeletal.LEFT_UPPER_ARM";
+    public static final String SKELETAL_RIGHT_UPPER_ARM = "skeletal.RIGHT_UPPER_ARM";
 }
