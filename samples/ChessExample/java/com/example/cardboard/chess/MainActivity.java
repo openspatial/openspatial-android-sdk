@@ -102,7 +102,9 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
     private Timer mPhysicsTimerThread;
 
-    private Pose6DEvent mHandTransform;
+    private volatile Pose6DEvent mHandTransform;
+    private volatile Pose6DEvent mInitialTransform;
+
     private final List<Sprite> mSprites = new LinkedList<Sprite>();
 
     private final Map<Constants.PieceType, ObjectModel> mWhitePieces = new HashMap<Constants.PieceType, ObjectModel>();
@@ -110,6 +112,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private final Map<Constants.SquareColor, ObjectModel> mTiles = new HashMap<Constants.SquareColor, ObjectModel>();
 
     private boolean mStart = false;
+    private boolean mShouldRecenter = false;
     volatile private boolean mLoaded = false;
 
     private Handler mVrHandler;
@@ -128,10 +131,15 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                             @Override
                             public void onEventReceived(OpenSpatialEvent event) {
                                 if (!mStart) {
-                                    return;
+                                    mInitialTransform = (Pose6DEvent)event;
+                                } else {
+                                    mHandTransform = (Pose6DEvent)event;
+                                    if (mShouldRecenter) {
+                                        mShouldRecenter = false;
+                                        mInitialTransform = mHandTransform;
+                                        recenterHand();
+                                    }
                                 }
-
-                                mHandTransform = (Pose6DEvent)event;
                             }
                         });
 
@@ -143,7 +151,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                                 if (bEvent.buttonEventType == ButtonEvent.ButtonEventType.TOUCH2_DOWN) {
                                     mStart = true;
                                 } else if (bEvent.buttonEventType == ButtonEvent.ButtonEventType.TOUCH0_DOWN) {
-                                    recenterHand();
+                                    mShouldRecenter = true;
                                 }
                             }
                         });
@@ -376,8 +384,34 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         }
     }
 
+    private double computeDeltaAngles(double angle, double start_angle) {
+        double delta_angle;
+        float sign  = start_angle > 0 ? 1.0f : -1.0f;
+        double lower = start_angle > 0 ? -Math.PI : Math.PI + start_angle;
+        double upper = lower + Math.abs(start_angle);
+
+        if ((lower <= angle) && (angle <= upper)) {
+            delta_angle = ((sign * Math.PI - start_angle)) + sign * (Math.PI - Math.abs(angle));
+        } else {
+            delta_angle = angle - start_angle;
+        }
+        return delta_angle;
+    }
+
+    EulerAngle getRelativePosition(Pose6DEvent event) {
+        EulerAngle absoluteAngle = event.getEulerAngle();
+        EulerAngle initialAngle = mInitialTransform.getEulerAngle();
+        EulerAngle relativeAngle = new EulerAngle();
+
+        relativeAngle.roll  = computeDeltaAngles(absoluteAngle.roll, initialAngle.roll);
+        relativeAngle.pitch = absoluteAngle.pitch - initialAngle.pitch;
+        relativeAngle.yaw   = computeDeltaAngles(absoluteAngle.yaw, initialAngle.yaw);
+
+        return relativeAngle;
+    }
+
     private void moveHand(Pose6DEvent event) {
-        EulerAngle eulerAngle = event.getEulerAngle();
+        EulerAngle eulerAngle = getRelativePosition(event);
         float xrot = -getDegrees((float)eulerAngle.pitch);
         float yrot = getDegrees((float)eulerAngle.yaw);
         float zrot = -getDegrees((float)eulerAngle.roll);
