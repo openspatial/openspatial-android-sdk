@@ -1,0 +1,6 @@
+To get these classes download Unity developement environment from:
+http://unity3d.com/unity/download
+
+The classes.jar are at:
+/Applications/Unity/Unity.app/Contents/PlaybackEngines/AndroidPlayer/development/bin/classes.jar
+/Applications/Unity/Unity.app/Contents/PlaybackEngines/AndroidPlayer/release/bin/classes.jar

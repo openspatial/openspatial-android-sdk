@@ -85,3 +85,11 @@ prebuilt_jar(
     'PUBLIC',
   ]
 )
+
+prebuilt_jar(
+  name = 'unity',
+  binary_jar = 'unity_classes-4.6.1_dev.jar',
+  visibility = [
+    'PUBLIC',
+  ]
+)
