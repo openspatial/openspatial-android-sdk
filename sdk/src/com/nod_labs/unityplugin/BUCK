@@ -1,0 +1,15 @@
+android_library(
+  name = 'UnityPlugin',
+  srcs = glob(['*.java']),
+  deps = [
+    '//release:OpenSpatialSDK',
+    '//thirdparty:unity'
+  ],
+  visibility = [
+    'PUBLIC',
+  ],
+)
+
+project_config(
+  src_target = ':UnityPlugin',
+)
