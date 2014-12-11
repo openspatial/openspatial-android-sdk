@@ -73,13 +73,13 @@ public class UnityPluginActivity extends UnityPlayerNativeActivity {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            Log.w(TAG, "Service Connected");
+            Log.d(TAG, "Service Connected");
             mOpenSpatialService = ((OpenSpatialService.OpenSpatialServiceBinder)service).getService();
             mOpenSpatialService.initialize(TAG, new OpenSpatialService.OpenSpatialServiceCallback() {
 
                 @Override
                 public void deviceConnected(BluetoothDevice device) {
-                    Log.w(TAG, "Registering Device" + device);
+                    Log.d(TAG, "Registering Device" + device);
 
                     rotationMap.put(device, new float[3]);
                     buttonMap.put(device, new boolean[3]);
@@ -92,6 +92,11 @@ public class UnityPluginActivity extends UnityPlayerNativeActivity {
 
                 @Override
                 public void deviceDisconnected(BluetoothDevice device) {
+                    rotationMap.remove(device);
+                    buttonMap.remove(device);
+                    pointerMap.remove(device);
+                    addressMap.remove(device.getAddress());
+                    addressList.remove(device.getAddress());
                 }
 
                 @Override
@@ -188,20 +193,27 @@ public class UnityPluginActivity extends UnityPlayerNativeActivity {
 
         try {
             mOpenSpatialService.registerForGestureEvents(device, gestureEventListener);
-        }
-            catch (OpenSpatialException e) {
+        } catch (OpenSpatialException e) {
             Log.e(TAG, "Error registering for GestureEvent " + e);
         }
     }
 
+    private void unregisterFromEvents(BluetoothDevice device) {
+        try {
+            mOpenSpatialService.unRegisterForPointerEvents(device);
+            mOpenSpatialService.unRegisterForButtonEvents(device);
+            mOpenSpatialService.unRegisterForPose6DEvents(device);
+            mOpenSpatialService.unRegisterForGestureEvents(device);
+        } catch (OpenSpatialException e) {
+            Log.e(TAG, "Could not unregister from events: " + e);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        bindService(new Intent(this,
-                OpenSpatialService.class),
-                mOpenSpatialServiceConnection,
-                BIND_AUTO_CREATE);
+        bindService(new Intent(this, OpenSpatialService.class),
+                mOpenSpatialServiceConnection, BIND_AUTO_CREATE);
     }
 
     @Override
