@@ -1,7 +1,7 @@
 [alias]
     example = //apps/OpenSpatialExample:OpenSpatialExample
     openspatial = //src/net/openspatial:OpenSpatialSDK
-    unityplugin = //src/com/nod_labs/unityplugin:UnityPlugin
+    unityplugin = //src/com/nod_labs/unityplugin:UnityOpenSpatialPlugin
 
 [java]
     src_roots = /src, /tests

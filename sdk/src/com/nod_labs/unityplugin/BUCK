@@ -1,5 +1,5 @@
 android_library(
-  name = 'UnityPlugin',
+  name = 'UnityOpenSpatialPlugin',
   srcs = glob(['*.java']),
   deps = [
     '//release:OpenSpatialSDK',
@@ -11,5 +11,5 @@ android_library(
 )
 
 project_config(
-  src_target = ':UnityPlugin',
+  src_target = ':UnityOpenSpatialPlugin',
 )

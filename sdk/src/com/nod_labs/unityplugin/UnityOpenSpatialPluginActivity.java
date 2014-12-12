@@ -25,10 +25,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-public class UnityPluginActivity extends UnityPlayerNativeActivity {
+public class UnityOpenSpatialPluginActivity extends UnityPlayerNativeActivity {
 
     OpenSpatialService mOpenSpatialService;
-    private static String TAG = UnityPluginActivity.class.getSimpleName();
+    private static String TAG = UnityOpenSpatialPluginActivity.class.getSimpleName();
 
     private static Map<String, BluetoothDevice> addressMap = new HashMap<String, BluetoothDevice>();
     private static Map<BluetoothDevice, float[]> rotationMap = new HashMap<BluetoothDevice, float[]>();
