@@ -1,6 +1,8 @@
 android_library(
   name = 'UnityOpenSpatialPlugin',
   srcs = glob(['*.java']),
+  source = '6',
+  target = '6',
   deps = [
     '//release:OpenSpatialSDK',
     '//thirdparty:unity'
