@@ -146,9 +146,9 @@ public class UnityOpenSpatialPluginActivity extends UnityPlayerNativeActivity {
                         case TOUCH2_DOWN:   buttons |=  (1 << 2); break;
                         case TOUCH2_UP:     buttons &= ~(1 << 2); break;
                         case TACTILE0_DOWN: buttons |=  (1 << 3); break;
-                        case TACTILE0_UP:   buttons &= ~(1 << 4); break;
-                        case TACTILE1_DOWN: buttons |=  (1 << 5); break;
-                        case TACTILE1_UP:   buttons &= ~(1 << 5); break;
+                        case TACTILE0_UP:   buttons &= ~(1 << 3); break;
+                        case TACTILE1_DOWN: buttons |=  (1 << 4); break;
+                        case TACTILE1_UP:   buttons &= ~(1 << 4); break;
                     }
 
                     mButtonMap.put(deviceId, buttons);
