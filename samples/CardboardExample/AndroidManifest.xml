@@ -19,6 +19,10 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="com.nod_labs.intent.action.NOD_ACTIVITY" />
+                <category android:name="com.nod_labs.intent.category.NOD_ENABLED" />
+            </intent-filter>
         </activity>
         <service android:name="net.openspatial.OpenSpatialService" />
     </application>
