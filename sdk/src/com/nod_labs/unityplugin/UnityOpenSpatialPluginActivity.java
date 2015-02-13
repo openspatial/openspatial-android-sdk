@@ -60,10 +60,10 @@ public class UnityOpenSpatialPluginActivity extends UnityPlayerNativeActivity {
                 public void deviceDisconnected(BluetoothDevice device) {
                     Integer deviceId = mDeviceIdMap.inverse().get(device);
                     if (deviceId != null) {
-                        mRotationMap.remove(deviceId);
-                        mPointerMap.remove(deviceId);
-                        mButtonMap.remove(deviceId);
-                        mGestureMap.remove(deviceId);
+                        mRotationMap.put(deviceId, new float[]{0.0f, 0.0f, 0.0f});
+                        mPointerMap.put(deviceId, new int[]{0, 0});
+                        mButtonMap.put(deviceId, 0);
+                        mGestureMap.put(deviceId, 0);
                     }
                 }
 
