@@ -22,6 +22,7 @@ import net.openspatial.OpenSpatialException;
 import net.openspatial.OpenSpatialService;
 import net.openspatial.PointerEvent;
 import net.openspatial.Pose6DEvent;
+import net.openspatial.Motion6DEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +37,8 @@ public class UnityOpenSpatialPluginActivity extends UnityPlayerNativeActivity {
     private static BiMap<Integer, BluetoothDevice> mDeviceIdMap = HashBiMap.create();
 
     private static Map<Integer, float[]> mRotationMap = new HashMap<Integer, float[]>();
+    private static Map<Integer, float[]> mGyroMap = new HashMap<Integer, float[]>();
+    private static Map<Integer, float[]> mAccelMap = new HashMap<Integer, float[]>();
     private static Map<Integer, int[]> mPointerMap = new HashMap<Integer, int[]>();
     private static Map<Integer, Integer> mButtonMap = new HashMap<Integer, Integer>();
     private static Map<Integer, Integer> mGestureMap = new HashMap<Integer, Integer>();
@@ -51,6 +54,8 @@ public class UnityOpenSpatialPluginActivity extends UnityPlayerNativeActivity {
                     mDeviceIdMap.put(deviceId, device);
 
                     mRotationMap.put(deviceId, new float[3]);
+                    mGyroMap.put(deviceId, new float[3]);
+                    mAccelMap.put(deviceId, new float[3]);
                     mPointerMap.put(deviceId, new int[2]);
                     mButtonMap.put(deviceId, new Integer(0));
                     mGestureMap.put(deviceId, new Integer(0));
@@ -61,6 +66,8 @@ public class UnityOpenSpatialPluginActivity extends UnityPlayerNativeActivity {
                     Integer deviceId = mDeviceIdMap.inverse().get(device);
                     if (deviceId != null) {
                         mRotationMap.put(deviceId, new float[]{0.0f, 0.0f, 0.0f});
+                        mGyroMap.put(deviceId, new float[]{0.0f, 0.0f, 0.0f});
+                        mAccelMap.put(deviceId, new float[]{0.0f, 0.0f, 0.0f});
                         mPointerMap.put(deviceId, new int[]{0, 0});
                         mButtonMap.put(deviceId, 0);
                         mGestureMap.put(deviceId, 0);
@@ -214,6 +221,37 @@ public class UnityOpenSpatialPluginActivity extends UnityPlayerNativeActivity {
         return true;
     }
 
+    public static boolean registerForMotion6DEvents(final int deviceId) {
+        final BluetoothDevice device = mDeviceIdMap.get(deviceId);
+        if (device == null) {
+            Log.e(TAG, "Register for Motion6D events failed: No device with id=" + deviceId);
+            return false;
+        }
+
+        try {
+            mOpenSpatialService.registerForMotion6DEvents(device, new OpenSpatialEvent.EventListener() {
+                @Override
+                public void onEventReceived(OpenSpatialEvent event) {
+                    Motion6DEvent Motion6DEvent = (Motion6DEvent) event;
+                    float[] gyro = mGyroMap.get(deviceId);
+                    gyro[0] = Motion6DEvent.gyroX;
+                    gyro[1] = Motion6DEvent.gyroY;
+                    gyro[2] = Motion6DEvent.gyroZ;
+
+                    float[] accel = mAccelMap.get(deviceId);
+                    accel[0] = Motion6DEvent.accelX;
+                    accel[1] = Motion6DEvent.accelY;
+                    accel[2] = Motion6DEvent.accelZ;
+                }
+            });
+        } catch (OpenSpatialException e) {
+            Log.e(TAG, "Register for Motion6D events failed: " + e.getMessage());
+            return false;
+        }
+
+        return true;
+    }
+
     public static boolean registerForGestureEvents(final int deviceId) {
         final BluetoothDevice device = mDeviceIdMap.get(deviceId);
         if (device == null) {
@@ -287,6 +325,22 @@ public class UnityOpenSpatialPluginActivity extends UnityPlayerNativeActivity {
         return true;
     }
 
+    public static boolean unregisterFromMotion6DEvents(int deviceId) {
+        final BluetoothDevice device = mDeviceIdMap.get(deviceId);
+        if (device == null) {
+            Log.e(TAG, "Unregister from Motion6D events failed: No device with id=" + deviceId);
+            return false;
+        }
+        try {
+            mOpenSpatialService.unRegisterForMotion6DEvents(device);
+        } catch (OpenSpatialException e) {
+            Log.e(TAG, "Unregister from Motion6D events failed: " + e.getMessage());
+            return false;
+        }
+
+        return true;
+    }
+
     public static boolean unregisterFromGestureEvents(int deviceId) {
         final BluetoothDevice device = mDeviceIdMap.get(deviceId);
         if (device == null) {
@@ -325,6 +379,16 @@ public class UnityOpenSpatialPluginActivity extends UnityPlayerNativeActivity {
     // Returns a float array of form [pitch, roll, yaw]
     public static float[] getRotationData(int deviceId) {
         return mRotationMap.get(deviceId);
+    }
+
+    // Returns a float array of form [gyroX, gyroY, gyroZ] (units: radians/sec)
+    public static float[] getGyroData(int deviceId) {
+        return mGyroMap.get(deviceId);
+    }
+
+    // Returns a float array of form [accelX, accelY, accelZ] (units: G's)
+    public static float[] getAccelData(int deviceId) {
+        return mAccelMap.get(deviceId);
     }
 
     public static int getGestureData(int deviceId) {
