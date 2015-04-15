@@ -74,7 +74,7 @@ public class UnityOpenSpatialPluginActivity extends UnityPlayerNativeActivity {
                     mAccelMap.put(deviceId, new float[3]);
                     mPointerMap.put(deviceId, new int[2]);
                     mButtonMap.put(deviceId, new Integer(0));
-                    mGestureMap.put(deviceId, new Integer(0));
+                    mGestureMap.put(deviceId, new Integer(-1));
                 }
 
                 @Override
@@ -408,7 +408,9 @@ public class UnityOpenSpatialPluginActivity extends UnityPlayerNativeActivity {
     }
 
     public static int getGestureData(int deviceId) {
-        return mGestureMap.get(deviceId);
+        int result = mGestureMap.get(deviceId);
+        mGestureMap.put(deviceId, -1);
+        return result;
     }
 
     @Override

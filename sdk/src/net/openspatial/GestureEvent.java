@@ -31,11 +31,6 @@ public class GestureEvent extends OpenSpatialEvent {
      */
     public enum GestureEventType {
         /**
-         * The user swiped up
-         */
-        SWIPE_UP,
-
-        /**
          * The user swiped down
          */
         SWIPE_DOWN,
@@ -49,6 +44,11 @@ public class GestureEvent extends OpenSpatialEvent {
          * The user swiped right
          */
         SWIPE_RIGHT,
+
+        /**
+         * The user swiped up
+         */
+        SWIPE_UP,
 
         /**
          * The user rotated clockwise
