@@ -25,6 +25,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
+import android.app.Activity;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -44,10 +45,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-public class UnityOpenSpatialPluginActivity extends UnityPlayerNativeActivity {
+public class UnityPlugin {
 
     private static OpenSpatialService mOpenSpatialService;
-    private static String TAG = UnityOpenSpatialPluginActivity.class.getSimpleName();
+    private static String TAG = UnityPlugin.class.getSimpleName();
+
+    private static UnityPlugin INSTANCE = null;
+
+    private static Activity mActivity;
 
     private static int mNextId = 0;
     private static BiMap<Integer, BluetoothDevice> mDeviceIdMap = HashBiMap.create();
@@ -58,6 +63,16 @@ public class UnityOpenSpatialPluginActivity extends UnityPlayerNativeActivity {
     private static Map<Integer, int[]> mPointerMap = new HashMap<Integer, int[]>();
     private static Map<Integer, Integer> mButtonMap = new HashMap<Integer, Integer>();
     private static Map<Integer, Integer> mGestureMap = new HashMap<Integer, Integer>();
+
+    protected UnityPlugin() {}
+
+    public static UnityPlugin getInstance() {
+        if(INSTANCE == null) {
+            INSTANCE = new UnityPlugin();
+        }
+
+        return INSTANCE;
+    }
 
     private static OpenSpatialService.OpenSpatialServiceCallback mOpenSpatialServiceCallback =
             new OpenSpatialService.OpenSpatialServiceCallback() {
@@ -279,7 +294,7 @@ public class UnityOpenSpatialPluginActivity extends UnityPlayerNativeActivity {
             mOpenSpatialService.registerForGestureEvents(device, new OpenSpatialEvent.EventListener() {
                 @Override
                 public void onEventReceived(OpenSpatialEvent event) {
-                    GestureEvent gesture = (GestureEvent)event;
+                    GestureEvent gesture = (GestureEvent) event;
                     Log.d(TAG, device.getName() + ": got GestureEvent of type " + gesture.gestureEventType +
                             " with magnitude " + gesture.magnitude);
                     mGestureMap.put(deviceId, gesture.gestureEventType.ordinal());
@@ -413,16 +428,13 @@ public class UnityOpenSpatialPluginActivity extends UnityPlayerNativeActivity {
         return result;
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        bindService(new Intent(this, OpenSpatialService.class),
-                mOpenSpatialServiceConnection, BIND_AUTO_CREATE);
+    public void init(Activity activity) {
+        mActivity = activity;
+        mActivity.bindService(new Intent(activity, OpenSpatialService.class),
+                mOpenSpatialServiceConnection, Activity.BIND_AUTO_CREATE);
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        unbindService(mOpenSpatialServiceConnection);
+    public static void shutdown() {
+        mActivity.unbindService(mOpenSpatialServiceConnection);
     }
 }
