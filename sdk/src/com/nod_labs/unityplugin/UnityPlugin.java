@@ -144,6 +144,16 @@ public class UnityPlugin {
         }
     };
 
+    public String nodGetName(int deviceId) {
+        BluetoothDevice device = mDeviceIdMap.get(deviceId);
+        if(device == null) {
+            Log.e(TAG, "Requested the name of an unknown device!");
+            return "";
+        }
+
+        return device.getName();
+    }
+
     public static int[] getDeviceIds() {
         return Ints.toArray(mDeviceIdMap.keySet());
     }
