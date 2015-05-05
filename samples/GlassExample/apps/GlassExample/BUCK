@@ -7,7 +7,6 @@ keystore(
 android_binary(
   name = 'GlassExample',
   manifest = 'AndroidManifest.xml',
-  target = 'Google Inc.:Google APIs:19',
   keystore = ':glassexample-app-keystore',
   deps = [
     '//res/com/example/glassexample:res',

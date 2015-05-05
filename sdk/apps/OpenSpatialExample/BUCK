@@ -7,7 +7,6 @@ keystore(
 android_binary(
   name = 'OpenSpatialExample',
   manifest = 'AndroidManifest.xml',
-  target = 'Google Inc.:Google APIs:19',
   keystore = ':OpenSpatialExample.keystore',
   deps = [
     '//res/com/example/openspatial:res',
