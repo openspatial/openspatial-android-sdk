@@ -43,6 +43,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.Override;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -117,6 +118,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
     private Handler mVrHandler;
 
+    private Set<BluetoothDevice> mConnectedDevices;
+
     OpenSpatialService mOpenSpatialService;
     private ServiceConnection mOpenSpatialServiceConnection = new ServiceConnection() {
         @Override
@@ -126,6 +129,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
             mOpenSpatialService.initialize(TAG, new OpenSpatialService.OpenSpatialServiceCallback() {
                 @Override
                 public void deviceConnected(BluetoothDevice device) {
+                    mConnectedDevices.add(device);
                     try {
                         mOpenSpatialService.registerForPose6DEvents(device, new OpenSpatialEvent.EventListener() {
                             @Override
@@ -159,6 +163,10 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                     } catch (OpenSpatialException e) {
                         Log.e(TAG, "Error registering for Pose6DEvent " + e);
                     }
+                }
+
+                public void deviceDisconnected(BluetoothDevice device) {
+                    mConnectedDevices.remove(device);
                 }
 
                 @Override
@@ -494,6 +502,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         cardboardView.setRenderer(this);
         setCardboardView(cardboardView);
 
+        mConnectedDevices = new HashSet<BluetoothDevice>();
+
         mCamera = new float[16];
         mView = new float[16];
         mModelViewProjection = new float[16];
@@ -517,8 +527,29 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
+        unRegisterForEvents();
         unbindService(mOpenSpatialServiceConnection);
+        super.onDestroy();
+    }
+
+    private void unRegisterForEvents() {
+        for(BluetoothDevice b : mConnectedDevices) {
+            try{
+                mOpenSpatialService.unRegisterForPose6DEvents(b);
+            }
+            catch (OpenSpatialException e) {
+                Log.d(TAG, "Attempt to unregister for Pose6D events from device " + b.getName()
+                        + " failed! Reason: " + e.getMessage());
+            }
+
+            try{
+                mOpenSpatialService.unRegisterForButtonEvents(b);
+            }
+            catch (OpenSpatialException e) {
+                Log.d(TAG, "Attempt to unregister for Button events from device " + b.getName()
+                        + " failed! Reason: " + e.getMessage());
+            }
+        }
     }
 
     @Override
