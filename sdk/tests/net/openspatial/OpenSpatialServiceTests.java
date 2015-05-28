@@ -52,42 +52,46 @@ public class OpenSpatialServiceTests {
 
     @Test
     public void testRegister() throws OpenSpatialException {
-        mService.registerForButtonEvents(mDevice, mListener);
-        mService.registerForPointerEvents(mDevice, mListener);
-        mService.registerForPose6DEvents(mDevice, mListener);
-        mService.registerForGestureEvents(mDevice, mListener);
+        mService.registerForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_BUTTON, mListener);
+        mService.registerForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_POINTER, mListener);
+        mService.registerForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_POSE6D, mListener);
+        mService.registerForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_GESTURE, mListener);
+        mService.registerForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_MOTION6D, mListener);
     }
 
     @Test(expected = OpenSpatialException.class)
     public void testDoubleRegister() throws OpenSpatialException {
-        mService.registerForButtonEvents(mDevice, mListener);
+        mService.registerForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_BUTTON, mListener);
 
         try {
             OpenSpatialEvent.EventListener listener = mock(OpenSpatialEvent.EventListener.class);
-            mService.registerForButtonEvents(mDevice, listener);
+            mService.registerForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_BUTTON, mListener);
         } catch (OpenSpatialException e) {
-            Assert.assertEquals(OpenSpatialException.ErrorCode.DEVICE_ALREADY_REGISTERED, e.getErrorCode());
+            Assert.assertEquals(OpenSpatialException.ErrorCode.DEVICE_ALREADY_REGISTERED,
+                    e.getErrorCode());
             throw e;
         }
     }
 
     @Test
     public void testunRegister() throws OpenSpatialException {
-        mService.registerForButtonEvents(mDevice, mListener);
-        mService.registerForPointerEvents(mDevice, mListener);
-        mService.registerForPose6DEvents(mDevice, mListener);
-        mService.registerForGestureEvents(mDevice, mListener);
+        mService.registerForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_BUTTON, mListener);
+        mService.registerForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_POINTER, mListener);
+        mService.registerForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_POSE6D, mListener);
+        mService.registerForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_GESTURE, mListener);
+        mService.registerForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_MOTION6D, mListener);
 
-        mService.unRegisterForButtonEvents(mDevice);
-        mService.unRegisterForPointerEvents(mDevice);
-        mService.unRegisterForPose6DEvents(mDevice);
-        mService.unRegisterForGestureEvents(mDevice);
+        mService.unregisterForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_BUTTON);
+        mService.unregisterForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_POINTER);
+        mService.unregisterForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_POSE6D);
+        mService.unregisterForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_GESTURE);
+        mService.unregisterForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_MOTION6D);
     }
 
     @Test(expected = OpenSpatialException.class)
     public void testUnregisterWithoutRegister() throws OpenSpatialException {
         try {
-            mService.unRegisterForButtonEvents(mDevice);
+            mService.unregisterForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_BUTTON);
         } catch (OpenSpatialException e) {
             Assert.assertEquals(OpenSpatialException.ErrorCode.DEVICE_NOT_REGISTERED, e.getErrorCode());
             throw e;
@@ -101,7 +105,7 @@ public class OpenSpatialServiceTests {
 
     @Test
     public void testButtonEventDelivery() throws OpenSpatialException {
-        mService.registerForButtonEvents(mDevice, mListener);
+        mService.registerForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_BUTTON, mListener);
 
         final ButtonEvent sendEvent = new ButtonEvent(mDevice, ButtonEvent.ButtonEventType.TOUCH1_UP);
         Intent i = new Intent();
@@ -122,7 +126,7 @@ public class OpenSpatialServiceTests {
 
     @Test
     public void testPointerEventDelivery() throws OpenSpatialException {
-        mService.registerForPointerEvents(mDevice, mListener);
+        mService.registerForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_POINTER, mListener);
 
         final PointerEvent sendEvent = new PointerEvent(mDevice, PointerEvent.PointerEventType.RELATIVE, 77, -88);
         Intent i = new Intent();
@@ -146,7 +150,7 @@ public class OpenSpatialServiceTests {
     @Ignore
     @Test
     public void testPose6DEventDelivery() throws OpenSpatialException {
-        mService.registerForPose6DEvents(mDevice, mListener);
+        mService.registerForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_POSE6D, mListener);
 
         final Pose6DEvent sendEvent = new Pose6DEvent(mDevice, 1, 2, 3, .444f, .555f, .666f);
         Intent i = new Intent();
@@ -190,7 +194,7 @@ public class OpenSpatialServiceTests {
 
     @Test
     public void testGestureEventDelivery() throws OpenSpatialException {
-        mService.registerForGestureEvents(mDevice, mListener);
+        mService.registerForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_GESTURE, mListener);
 
         final GestureEvent sendEvent = new GestureEvent(mDevice, GestureEvent.GestureEventType.SWIPE_DOWN, 1.1);
         Intent i = new Intent();
@@ -210,7 +214,7 @@ public class OpenSpatialServiceTests {
 
     @Test
     public void testDoubleGestureEventDelivery() throws OpenSpatialException {
-        mService.registerForGestureEvents(mDevice, mListener);
+        mService.registerForEvents(mDevice, OpenSpatialEvent.EventType.EVENT_GESTURE, mListener);
 
         final GestureEvent downEvent = new GestureEvent(mDevice, GestureEvent.GestureEventType.SWIPE_DOWN, 1.1);
         final GestureEvent upEvent = new GestureEvent(mDevice, GestureEvent.GestureEventType.SWIPE_UP, 1.1);

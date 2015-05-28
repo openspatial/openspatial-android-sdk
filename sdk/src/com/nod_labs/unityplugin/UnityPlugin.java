@@ -106,23 +106,9 @@ public class UnityPlugin {
                 }
 
                 @Override
-                public void buttonEventRegistrationResult(BluetoothDevice device, int status) {
-                }
-
-                @Override
-                public void pointerEventRegistrationResult(BluetoothDevice device, int status) {
-                }
-
-                @Override
-                public void pose6DEventRegistrationResult(BluetoothDevice device, int status) {
-                }
-
-                @Override
-                public void gestureEventRegistrationResult(BluetoothDevice device, int status) {
-                }
-
-                @Override
-                public void motion6DEventRegistrationResult(BluetoothDevice device, int status) {
+                public void eventRegistrationResult(BluetoothDevice device,
+                                                    OpenSpatialEvent.EventType type,
+                                                    int status) {
                 }
             };
 
@@ -179,7 +165,9 @@ public class UnityPlugin {
         }
 
         try {
-            mOpenSpatialService.registerForButtonEvents(device, new OpenSpatialEvent.EventListener() {
+            mOpenSpatialService.registerForEvents(device, OpenSpatialEvent.EventType.EVENT_BUTTON,
+                    new OpenSpatialEvent.EventListener()
+            {
                 @Override
                 public void onEventReceived(OpenSpatialEvent event) {
                     ButtonEvent bEvent = (ButtonEvent) event;
@@ -219,7 +207,9 @@ public class UnityPlugin {
         }
 
         try {
-            mOpenSpatialService.registerForPointerEvents(device, new OpenSpatialEvent.EventListener() {
+            mOpenSpatialService.registerForEvents(device, OpenSpatialEvent.EventType.EVENT_POINTER,
+                    new OpenSpatialEvent.EventListener()
+            {
                 @Override
                 public void onEventReceived(OpenSpatialEvent event) {
                     PointerEvent pEvent = (PointerEvent) event;
@@ -244,7 +234,9 @@ public class UnityPlugin {
         }
 
         try {
-            mOpenSpatialService.registerForPose6DEvents(device, new OpenSpatialEvent.EventListener() {
+            mOpenSpatialService.registerForEvents(device, OpenSpatialEvent.EventType.EVENT_POSE6D,
+                    new OpenSpatialEvent.EventListener()
+            {
                 @Override
                 public void onEventReceived(OpenSpatialEvent event) {
                     Pose6DEvent pose6DEvent = (Pose6DEvent) event;
@@ -270,7 +262,9 @@ public class UnityPlugin {
         }
 
         try {
-            mOpenSpatialService.registerForMotion6DEvents(device, new OpenSpatialEvent.EventListener() {
+            mOpenSpatialService.registerForEvents(device, OpenSpatialEvent.EventType.EVENT_POSE6D,
+                    new OpenSpatialEvent.EventListener()
+            {
                 @Override
                 public void onEventReceived(OpenSpatialEvent event) {
                     Motion6DEvent Motion6DEvent = (Motion6DEvent) event;
@@ -301,7 +295,9 @@ public class UnityPlugin {
         }
 
         try {
-            mOpenSpatialService.registerForGestureEvents(device, new OpenSpatialEvent.EventListener() {
+            mOpenSpatialService.registerForEvents(device, OpenSpatialEvent.EventType.EVENT_GESTURE,
+                    new OpenSpatialEvent.EventListener()
+            {
                 @Override
                 public void onEventReceived(OpenSpatialEvent event) {
                     GestureEvent gesture = (GestureEvent) event;
@@ -325,7 +321,8 @@ public class UnityPlugin {
             return false;
         }
         try {
-            mOpenSpatialService.unRegisterForButtonEvents(device);
+            mOpenSpatialService.unregisterForEvents(device,
+                    OpenSpatialEvent.EventType.EVENT_BUTTON);
         } catch (OpenSpatialException e) {
             Log.e(TAG, "Unregister from Button events failed: " + e.getMessage());
             return false;
@@ -341,7 +338,8 @@ public class UnityPlugin {
             return false;
         }
         try {
-            mOpenSpatialService.unRegisterForPointerEvents(device);
+            mOpenSpatialService.unregisterForEvents(device,
+                    OpenSpatialEvent.EventType.EVENT_POINTER);
         } catch (OpenSpatialException e) {
             Log.e(TAG, "Unregister from Pointer events failed: " + e.getMessage());
             return false;
@@ -357,7 +355,8 @@ public class UnityPlugin {
             return false;
         }
         try {
-            mOpenSpatialService.unRegisterForPose6DEvents(device);
+            mOpenSpatialService.unregisterForEvents(device,
+                    OpenSpatialEvent.EventType.EVENT_POSE6D);
         } catch (OpenSpatialException e) {
             Log.e(TAG, "Unregister from Pose6D events failed: " + e.getMessage());
             return false;
@@ -373,7 +372,8 @@ public class UnityPlugin {
             return false;
         }
         try {
-            mOpenSpatialService.unRegisterForMotion6DEvents(device);
+            mOpenSpatialService.unregisterForEvents(device,
+                    OpenSpatialEvent.EventType.EVENT_MOTION6D);
         } catch (OpenSpatialException e) {
             Log.e(TAG, "Unregister from Motion6D events failed: " + e.getMessage());
             return false;
@@ -389,7 +389,8 @@ public class UnityPlugin {
             return false;
         }
         try {
-            mOpenSpatialService.unRegisterForGestureEvents(device);
+            mOpenSpatialService.unregisterForEvents(device,
+                    OpenSpatialEvent.EventType.EVENT_GESTURE);
         } catch (OpenSpatialException e) {
             Log.e(TAG, "Unregister from Gesture events failed: " + e.getMessage());
             return false;

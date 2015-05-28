@@ -43,6 +43,11 @@ public class OpenSpatialException extends Exception {
          * Bluetooth not on
          */
         BLUETOOTH_OFF,
+
+        /**
+         * An invalid parameter was passed to an OpenSpatial method
+         */
+        INVALID_PARAMETER,
     }
 
     private ErrorCode mErrorCode;

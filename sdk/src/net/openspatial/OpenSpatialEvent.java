@@ -20,6 +20,9 @@ import android.bluetooth.BluetoothDevice;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * The base class for all events delivered over the {@link net.openspatial.OpenSpatialService}
  */
@@ -56,6 +59,22 @@ abstract public class OpenSpatialEvent implements Parcelable {
          * @see net.openspatial.Motion6DEvent
          */
         EVENT_MOTION6D,
+    }
+
+    public static final Map<EventType, String> EVENT_UUID_MAP = new HashMap<EventType, String>();
+
+    static {
+        EVENT_UUID_MAP.put(EventType.EVENT_BUTTON,
+                OpenSpatialConstants.OPENSPATIAL_BUTTONSTATE_CHARACTERISTIC);
+        EVENT_UUID_MAP.put(EventType.EVENT_POINTER,
+                OpenSpatialConstants.OPENSPATIAL_POSITION_2D_CHARACTERISTIC);
+        EVENT_UUID_MAP.put(EventType.EVENT_POSE6D,
+                OpenSpatialConstants.OPENSPATIAL_POSE_6D_CHARACTERISTIC);
+        EVENT_UUID_MAP.put(EventType.EVENT_GESTURE,
+                OpenSpatialConstants.OPENSPATIAL_GESTURE_CHARACTERISTIC);
+        EVENT_UUID_MAP.put(EventType.EVENT_MOTION6D,
+                OpenSpatialConstants.OPENSPATIAL_MOTION_6D_CHARACTERISTIC);
+
     }
 
     /**

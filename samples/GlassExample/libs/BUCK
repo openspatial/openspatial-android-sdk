@@ -1,6 +1,6 @@
 prebuilt_jar(
   name = 'OpenSpatial',
-  binary_jar = 'OpenSpatialSDKv0.6.8.jar',
+  binary_jar = 'OpenSpatialSDKv0.7.0.jar',
   visibility = [
     'PUBLIC',
   ]

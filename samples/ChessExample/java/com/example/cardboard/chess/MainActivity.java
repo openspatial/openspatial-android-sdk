@@ -131,7 +131,10 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                 public void deviceConnected(BluetoothDevice device) {
                     mConnectedDevices.add(device);
                     try {
-                        mOpenSpatialService.registerForPose6DEvents(device, new OpenSpatialEvent.EventListener() {
+                        mOpenSpatialService.registerForEvents(device,
+                                OpenSpatialEvent.EventType.EVENT_POSE6D,
+                                new OpenSpatialEvent.EventListener()
+                        {
                             @Override
                             public void onEventReceived(OpenSpatialEvent event) {
                                 if (!mStart) {
@@ -147,7 +150,10 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                             }
                         });
 
-                        mOpenSpatialService.registerForButtonEvents(device, new OpenSpatialEvent.EventListener() {
+                        mOpenSpatialService.registerForEvents(device,
+                                OpenSpatialEvent.EventType.EVENT_BUTTON,
+                                new OpenSpatialEvent.EventListener()
+                        {
                             @Override
                             public void onEventReceived(OpenSpatialEvent event) {
                                 ButtonEvent bEvent = (ButtonEvent)event;
@@ -170,21 +176,13 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
                 }
 
                 @Override
-                public void buttonEventRegistrationResult(BluetoothDevice device, int i) {
+                public void eventRegistrationResult(BluetoothDevice bluetoothDevice,
+                                                    OpenSpatialEvent.EventType eventType,
+                                                    int status) {
+                    Log.d(TAG, "Device " + bluetoothDevice + "registration for "
+                            + eventType.name() + "completed with status " + status);
                 }
 
-                @Override
-                public void pointerEventRegistrationResult(BluetoothDevice device, int i) {
-                }
-
-                @Override
-                public void pose6DEventRegistrationResult(BluetoothDevice device, int i) {
-
-                }
-
-                @Override
-                public void gestureEventRegistrationResult(BluetoothDevice device, int i) {
-                }
             });
 
             mOpenSpatialService.getConnectedDevices();
@@ -535,7 +533,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private void unRegisterForEvents() {
         for(BluetoothDevice b : mConnectedDevices) {
             try{
-                mOpenSpatialService.unRegisterForPose6DEvents(b);
+                mOpenSpatialService.unregisterForEvents(b, OpenSpatialEvent.EventType.EVENT_POSE6D);
             }
             catch (OpenSpatialException e) {
                 Log.d(TAG, "Attempt to unregister for Pose6D events from device " + b.getName()
@@ -543,7 +541,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
             }
 
             try{
-                mOpenSpatialService.unRegisterForButtonEvents(b);
+                mOpenSpatialService.unregisterForEvents(b,
+                        OpenSpatialEvent.EventType.EVENT_BUTTON);
             }
             catch (OpenSpatialException e) {
                 Log.d(TAG, "Attempt to unregister for Button events from device " + b.getName()

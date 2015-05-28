@@ -211,4 +211,31 @@ public class OpenSpatialEventFactory {
                 getGyroReadingFromInt16(gyroY),
                 getGyroReadingFromInt16(gyroZ));
     }
+
+    public List<OpenSpatialEvent> getOpenSpatialEventsFromCharacteristic(
+            BluetoothDevice device, OpenSpatialEvent.EventType eventType, byte[] value) {
+        List<OpenSpatialEvent> result = new ArrayList<OpenSpatialEvent>();
+        switch (eventType) {
+            case EVENT_BUTTON:
+                List<ButtonEvent> buttonEvents = getButtonEventsFromCharacteristic(device, value);
+                for(ButtonEvent b : buttonEvents) {
+                    result.add(b);
+                }
+                break;
+            case EVENT_GESTURE:
+                result.add(getGestureEventFromCharacteristic(device, value));
+                break;
+            case EVENT_POSE6D:
+                result.add(getPose6DEventFromCharacteristic(device, value));
+                break;
+            case EVENT_MOTION6D:
+                result.add(getMotion6DEventFromCharacteristic(device, value));
+                break;
+            case EVENT_POINTER:
+                result.add(getPointerEventFromCharacteristic(device, value));
+                break;
+        }
+
+        return result;
+    }
 }

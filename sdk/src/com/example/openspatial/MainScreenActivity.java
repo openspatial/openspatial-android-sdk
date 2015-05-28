@@ -31,6 +31,9 @@ import android.widget.Toast;
 import com.nod_labs.pointer.PointerService;
 import net.openspatial.*;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -42,6 +45,7 @@ public class MainScreenActivity extends Activity implements OpenSpatialService.O
     private static final int RADIUS = 20;
     private static final int mWhiteColor = Color.WHITE;
     private static final int mRedColor = Color.RED;
+    private Set<BluetoothDevice> mDevices = new HashSet<BluetoothDevice>();
 
     private ServiceConnection mOpenSpatialServiceConnection = new ServiceConnection() {
         @Override
@@ -76,7 +80,8 @@ public class MainScreenActivity extends Activity implements OpenSpatialService.O
 
     private void registerForEvents(final BluetoothDevice device) {
         try {
-            mOpenSpatialService.registerForPointerEvents(device, new OpenSpatialEvent.EventListener() {
+            mOpenSpatialService.registerForEvents(device, OpenSpatialEvent.EventType.EVENT_POINTER,
+                    new OpenSpatialEvent.EventListener() {
                 @Override
                 public void onEventReceived(OpenSpatialEvent event) {
                     PointerEvent pEvent = (PointerEvent) event;
@@ -88,12 +93,15 @@ public class MainScreenActivity extends Activity implements OpenSpatialService.O
         }
 
         try {
-            mOpenSpatialService.registerForButtonEvents(device, new OpenSpatialEvent.EventListener() {
+            mOpenSpatialService.registerForEvents(device, OpenSpatialEvent.EventType.EVENT_BUTTON,
+                    new OpenSpatialEvent.EventListener()
+            {
                 @Override
                 public void onEventReceived(OpenSpatialEvent event) {
                     ButtonEvent bEvent = (ButtonEvent) event;
 
-                    Log.d(TAG, device.getName() + ": received ButtonEvent of type " + bEvent.buttonEventType);
+                    Log.d(TAG, device.getName() + ": received ButtonEvent of type "
+                            + bEvent.buttonEventType);
 
                     if (bEvent.buttonEventType == ButtonEvent.ButtonEventType.TOUCH0_DOWN) {
                         mPointerService.updatePointerColor(device.getAddress(),
@@ -117,7 +125,9 @@ public class MainScreenActivity extends Activity implements OpenSpatialService.O
         }
 
         try {
-            mOpenSpatialService.registerForPose6DEvents(device, new OpenSpatialEvent.EventListener() {
+            mOpenSpatialService.registerForEvents(device, OpenSpatialEvent.EventType.EVENT_POSE6D,
+                    new OpenSpatialEvent.EventListener()
+            {
                 @Override
                 public void onEventReceived(OpenSpatialEvent event) {
                     Pose6DEvent pose6DEvent = (Pose6DEvent) event;
@@ -128,7 +138,9 @@ public class MainScreenActivity extends Activity implements OpenSpatialService.O
         }
 
         try {
-            mOpenSpatialService.registerForMotion6DEvents(device, new OpenSpatialEvent.EventListener() {
+            mOpenSpatialService.registerForEvents(device, OpenSpatialEvent.EventType.EVENT_MOTION6D,
+                    new OpenSpatialEvent.EventListener()
+            {
                 @Override
                 public void onEventReceived(OpenSpatialEvent event) {
                     Motion6DEvent motion6DEvent = (Motion6DEvent) event;
@@ -155,9 +167,23 @@ public class MainScreenActivity extends Activity implements OpenSpatialService.O
         };
 
         try {
-            mOpenSpatialService.registerForGestureEvents(device, gestureEventListener);
+            mOpenSpatialService.registerForEvents(device, OpenSpatialEvent.EventType.EVENT_GESTURE,
+                    gestureEventListener);
         } catch (OpenSpatialException e) {
             Log.e(TAG, "Error registering for GestureEvent " + e);
+        }
+    }
+
+    private void unregisterForEvents() {
+        for (BluetoothDevice device : mDevices) {
+            for(OpenSpatialEvent.EventType eventType : OpenSpatialEvent.EventType.values()) {
+                try {
+                    mOpenSpatialService.unregisterForEvents(device, eventType);
+                } catch (OpenSpatialException e) {
+                    Log.e(TAG, "Failed to unregister for " + eventType.name()
+                            + " on device " + device.getName());
+                }
+            }
         }
     }
 
@@ -170,10 +196,11 @@ public class MainScreenActivity extends Activity implements OpenSpatialService.O
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
-
+        unregisterForEvents();
         unbindService(mOpenSpatialServiceConnection);
         unbindService(mPointerServiceConnection);
+
+        super.onDestroy();
     }
 
     @Override
@@ -189,35 +216,20 @@ public class MainScreenActivity extends Activity implements OpenSpatialService.O
 
         Log.d(TAG, "Registering " + device.getName());
         registerForEvents(device);
+        mDevices.add(device);
     }
 
     @Override
     public void deviceDisconnected(BluetoothDevice device) {
+        mDevices.remove(device);
         Toast.makeText(this, device.getName() + "disconnected", Toast.LENGTH_SHORT).show();
     }
 
     @Override
-    public void buttonEventRegistrationResult(BluetoothDevice device, int status) {
-        Toast.makeText(this, "ButtonEvent registration status: " + status, Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void pointerEventRegistrationResult(BluetoothDevice device, int status) {
-        Toast.makeText(this, "PointerEvent registration status: " + status, Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void pose6DEventRegistrationResult(BluetoothDevice device, int status) {
-        Toast.makeText(this, "Pose6DEvent registration status: " + status, Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void gestureEventRegistrationResult(BluetoothDevice device, int status) {
-        Toast.makeText(this, "GestureEvent registration status: " + status, Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void motion6DEventRegistrationResult(BluetoothDevice device, int status) {
-        Toast.makeText(this, "Motion6D registration status: " + status, Toast.LENGTH_SHORT).show();
+    public void eventRegistrationResult(BluetoothDevice device,
+                                        OpenSpatialEvent.EventType type,
+                                        int status) {
+        Toast.makeText(this, type.name() + " registration status: " + status,
+                Toast.LENGTH_SHORT).show();
     }
 }

@@ -81,7 +81,7 @@ public class OpenSpatialSingleUserService extends Service {
                     UUID.fromString(OpenSpatialConstants.OPENSPATIAL_POSE_6D_CHARACTERISTIC))) {
                 mCallback.pose6DEventRegistrationResult(gatt.getDevice(), status);
             } else if (descriptor.getCharacteristic().getUuid().equals(
-                    UUID.fromString(OpenSpatialConstants.OPENSPATIAL_MOTION6D_CHARACTERISTIC))) {
+                    UUID.fromString(OpenSpatialConstants.OPENSPATIAL_MOTION_6D_CHARACTERISTIC))) {
                 mCallback.motion6DEventRegistrationResult(gatt.getDevice(), status);
             }
         }
@@ -126,7 +126,7 @@ public class OpenSpatialSingleUserService extends Service {
                 events.add(mEventFactory.getPose6DEventFromCharacteristic(
                         gatt.getDevice(), characteristic.getValue()));
             } else if (characteristic.getUuid().equals(
-                    UUID.fromString(OpenSpatialConstants.OPENSPATIAL_MOTION6D_CHARACTERISTIC))) {
+                    UUID.fromString(OpenSpatialConstants.OPENSPATIAL_MOTION_6D_CHARACTERISTIC))) {
                 synchronized (mMotion6DEventCallbacks) {
                     listener = mMotion6DEventCallbacks.get(gatt.getDevice());
                 }
@@ -165,7 +165,7 @@ public class OpenSpatialSingleUserService extends Service {
     private final HashMap<BluetoothDevice, OpenSpatialEvent.EventListener> mMotion6DEventCallbacks =
             new HashMap<BluetoothDevice, OpenSpatialEvent.EventListener>();
 
-    private static final String TAG = "OpenSpatialSingleUserService";
+    private static final String TAG = "OS-SingleUserService";
     private static final String CLIENT_CHARACTERISTIC_CONFIG     = "00002902-0000-1000-8000-00805f9b34fb";
 
     @Override
@@ -429,7 +429,7 @@ public class OpenSpatialSingleUserService extends Service {
             status = registerCallback(mMotion6DEventCallbacks,
                     device,
                     listener,
-                    OpenSpatialConstants.OPENSPATIAL_MOTION6D_CHARACTERISTIC);
+                    OpenSpatialConstants.OPENSPATIAL_MOTION_6D_CHARACTERISTIC);
         }
 
         if (status != BluetoothGatt.GATT_SUCCESS) {
@@ -505,7 +505,7 @@ public class OpenSpatialSingleUserService extends Service {
         synchronized (mMotion6DEventCallbacks) {
             unRegisterCallback(mMotion6DEventCallbacks,
                     device,
-                    OpenSpatialConstants.OPENSPATIAL_MOTION6D_CHARACTERISTIC);
+                    OpenSpatialConstants.OPENSPATIAL_MOTION_6D_CHARACTERISTIC);
         }
     }
 
