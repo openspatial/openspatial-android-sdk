@@ -51,6 +51,7 @@ abstract public class OpenSpatialEvent implements Parcelable {
 
         /**
          * Gesture event
+         * @see net.openspatial.GestureEvent
          */
         EVENT_GESTURE,
 
@@ -59,6 +60,12 @@ abstract public class OpenSpatialEvent implements Parcelable {
          * @see net.openspatial.Motion6DEvent
          */
         EVENT_MOTION6D,
+
+        /**
+         * AnalogData event
+         * @see net.openspatial.AnalogDataEvent
+         */
+        EVENT_ANALOGDATA,
     }
 
     public static final Map<EventType, String> EVENT_UUID_MAP = new HashMap<EventType, String>();
@@ -74,6 +81,8 @@ abstract public class OpenSpatialEvent implements Parcelable {
                 OpenSpatialConstants.OPENSPATIAL_GESTURE_CHARACTERISTIC);
         EVENT_UUID_MAP.put(EventType.EVENT_MOTION6D,
                 OpenSpatialConstants.OPENSPATIAL_MOTION_6D_CHARACTERISTIC);
+        EVENT_UUID_MAP.put(EventType.EVENT_ANALOGDATA,
+                OpenSpatialConstants.OPENSPATIAL_ANALOGDATA_CHARACTERISTIC);
 
     }
 

@@ -32,6 +32,7 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.primitives.Ints;
 import com.unity3d.player.UnityPlayerNativeActivity;
 
+import net.openspatial.AnalogDataEvent;
 import net.openspatial.ButtonEvent;
 import net.openspatial.GestureEvent;
 import net.openspatial.OpenSpatialEvent;
@@ -63,6 +64,7 @@ public class UnityPlugin {
     private static Map<Integer, int[]> mPointerMap = new HashMap<Integer, int[]>();
     private static Map<Integer, Integer> mButtonMap = new HashMap<Integer, Integer>();
     private static Map<Integer, Integer> mGestureMap = new HashMap<Integer, Integer>();
+    private static Map<Integer, int[]> mAnalogDataMap = new HashMap<Integer, int[]>();
 
     protected UnityPlugin() {}
 
@@ -90,6 +92,7 @@ public class UnityPlugin {
                     mPointerMap.put(deviceId, new int[2]);
                     mButtonMap.put(deviceId, new Integer(0));
                     mGestureMap.put(deviceId, new Integer(-1));
+                    mAnalogDataMap.put(deviceId, new int[3]);
                 }
 
                 @Override
@@ -102,6 +105,7 @@ public class UnityPlugin {
                         mPointerMap.put(deviceId, new int[]{0, 0});
                         mButtonMap.put(deviceId, 0);
                         mGestureMap.put(deviceId, 0);
+                        mAnalogDataMap.put(deviceId, new int[]{0, 0, 0});
                     }
                 }
 
@@ -254,6 +258,35 @@ public class UnityPlugin {
         return true;
     }
 
+    public static boolean registerForAnalogDataEvents(final int deviceId) {
+        final BluetoothDevice device = mDeviceIdMap.get(deviceId);
+        if (device == null) {
+            Log.e(TAG, "Register for AnalogData events failed: No device with id=" + deviceId);
+            return false;
+        }
+
+        try {
+            mOpenSpatialService.registerForEvents(device,
+                    OpenSpatialEvent.EventType.EVENT_ANALOGDATA,
+                    new OpenSpatialEvent.EventListener()
+                    {
+                        @Override
+                        public void onEventReceived(OpenSpatialEvent event) {
+                            AnalogDataEvent analogDataEvent = (AnalogDataEvent) event;
+                            int[] pose = mAnalogDataMap.get(deviceId);
+                            pose[0] = analogDataEvent.joystickX;
+                            pose[1] = analogDataEvent.joystickY;
+                            pose[2] = analogDataEvent.trigger;
+                        }
+                    });
+        } catch (OpenSpatialException e) {
+            Log.e(TAG, "Register for AnalogData events failed: " + e.getMessage());
+            return false;
+        }
+
+        return true;
+    }
+
     public static boolean registerForMotion6DEvents(final int deviceId) {
         final BluetoothDevice device = mDeviceIdMap.get(deviceId);
         if (device == null) {
@@ -365,6 +398,23 @@ public class UnityPlugin {
         return true;
     }
 
+    public static boolean unregisterFromAnalogDataEvents(int deviceId) {
+        final BluetoothDevice device = mDeviceIdMap.get(deviceId);
+        if (device == null) {
+            Log.e(TAG, "Unregister from AnalogData events failed: No device with id=" + deviceId);
+            return false;
+        }
+        try {
+            mOpenSpatialService.unregisterForEvents(device,
+                    OpenSpatialEvent.EventType.EVENT_ANALOGDATA);
+        } catch (OpenSpatialException e) {
+            Log.e(TAG, "Unregister from AnalogData events failed: " + e.getMessage());
+            return false;
+        }
+
+        return true;
+    }
+
     public static boolean unregisterFromMotion6DEvents(int deviceId) {
         final BluetoothDevice device = mDeviceIdMap.get(deviceId);
         if (device == null) {
@@ -421,6 +471,11 @@ public class UnityPlugin {
     // Returns a float array of form [pitch, roll, yaw]
     public static float[] getRotationData(int deviceId) {
         return mRotationMap.get(deviceId);
+    }
+
+    // Returns an int array of form [joystickX, joystickY, trigger]
+    public static int[] getAnalogData(int deviceId) {
+        return mAnalogDataMap.get(deviceId);
     }
 
     // Returns a float array of form [gyroX, gyroY, gyroZ] (units: radians/sec)

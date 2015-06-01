@@ -183,6 +183,17 @@ public class OpenSpatialEventFactory {
                 getFloatFromInt16(codedYaw));
     }
 
+    public AnalogDataEvent getAnalogDataEventFromCharacteristic(BluetoothDevice device,
+                                                                byte[] value) {
+        ByteBuffer buffer = ByteBuffer.wrap(value);
+
+        short joystickX = buffer.getShort();
+        short joystickY = buffer.getShort();
+        short trigger = buffer.getShort();
+
+        return new AnalogDataEvent(device, joystickX, joystickY, trigger);
+    }
+
     float getAccelReadingFromInt16(short value) {
         return ((float)value) / 8192;
     }
@@ -233,6 +244,9 @@ public class OpenSpatialEventFactory {
                 break;
             case EVENT_POINTER:
                 result.add(getPointerEventFromCharacteristic(device, value));
+                break;
+            case EVENT_ANALOGDATA:
+                result.add(getAnalogDataEventFromCharacteristic(device, value));
                 break;
         }
 
