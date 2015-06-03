@@ -25,7 +25,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Parcel;
 import android.util.Log;
 
 import java.util.*;
@@ -43,20 +45,23 @@ public class OpenSpatialService extends Service {
     private final BroadcastReceiver mEventReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-        String action = intent.getAction();
+            String action = intent.getAction();
 
-        if (action == null) {
-            Log.e(TAG, "Got null action");
-            return;
-        }
+            if (action == null) {
+                Log.e(TAG, "Got null action");
+                return;
+            }
 
-        if (action.equals(OpenSpatialConstants.OPENSPATIAL_DEVICE_CONNECTED_INTENT_ACTION) ||
-                action.equals(OpenSpatialConstants.OPENSPATIAL_DEVICE_DISCONNECTED_INTENT_ACTION)) {
-            Log.d(TAG, "Got device connected event");
-            processDeviceConnectionIntent(intent);
-        } else {
-            processEventIntent(intent);
-        }
+            if (action.equals(OpenSpatialConstants.OPENSPATIAL_DEVICE_CONNECTED_INTENT_ACTION) ||
+                    action.equals(OpenSpatialConstants.OPENSPATIAL_DEVICE_DISCONNECTED_INTENT_ACTION)) {
+                Log.d(TAG, "Got device connected event");
+                processDeviceConnectionIntent(intent);
+            } else if (action.equals(
+                    OpenSpatialConstants.OPENSPATIAL_DEVICE_INFO_INTENT_ACTION)) {
+                processDeviceInfoReceipt(intent);
+            } else {
+                processEventIntent(intent);
+            }
         }
     };
 
@@ -146,6 +151,15 @@ public class OpenSpatialService extends Service {
         sendBroadcast(intent);
     }
 
+    private void sendIntent(BluetoothDevice device, String action, String infoType) {
+        Intent intent = new Intent(action);
+        intent.putExtra(OpenSpatialConstants.BLUETOOTH_DEVICE, device);
+        intent.putExtra(OpenSpatialConstants.IDENTIFIER, mIdentifier);
+        intent.putExtra(OpenSpatialConstants.INFO_TYPE, infoType);
+
+        sendBroadcast(intent);
+    }
+
     private void sendIntent(BluetoothDevice device, String action,
                             OpenSpatialEvent.EventType eventType, boolean setRegistered) {
         Intent intent = new Intent(action);
@@ -202,13 +216,15 @@ public class OpenSpatialService extends Service {
                 OpenSpatialConstants.OPENSPATIAL_DEVICE_DISCONNECTED_INTENT_ACTION);
         connectedDevicesfilter.addAction(
                 OpenSpatialConstants.OPENSPATIAL_EVENT_INTENT_ACTION);
+        connectedDevicesfilter.addAction(
+                OpenSpatialConstants.OPENSPATIAL_DEVICE_INFO_INTENT_ACTION);
         registerReceiver(mEventReceiver, connectedDevicesfilter);
 
     }
 
     /**
      * Register for {@link net.openspatial.OpenSpatialEvent}s from the specified {@code device}
-     * @param device The device to listen for {@code ButtonEvent}s from. This is an instance of
+     * @param device The device to listen for {@code OpenSpatialEvent}s from. This is an instance of
      *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
      *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
      * @param eventType The OpenSpatial event type that you are interested in receiving
@@ -228,8 +244,26 @@ public class OpenSpatialService extends Service {
     }
 
     /**
-     * Unregister for {@link net.openspatial.ButtonEvent}s from the specified {@code device}
-     * @param device The device to stop listening for {@code ButtonEvent}s from. This is an instance of
+     * Query information from the specified {@code device}
+     * @param device The device to request info for. This is an instance of
+     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
+     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     * @param infoType The kind of device information you are interested in
+     */
+    public void queryDeviceInfo(BluetoothDevice device, String infoType)
+            throws OpenSpatialException {
+
+        if (!mEventCallbacks.containsKey(device)) {
+            throw new OpenSpatialException(OpenSpatialException.ErrorCode.DEVICE_NOT_REGISTERED,
+                    "Attempted to query info for a device that is not registered!");
+        }
+        sendIntent(device, OpenSpatialConstants.OPENSPATIAL_QUERY_DEVICE_INFO_INTENT_ACTION,
+                infoType);
+    }
+
+    /**
+     * Unregister for {@link net.openspatial.OpenSpatialEvent}s from the specified {@code device}
+     * @param device The device to stop listening for {@code OpenSpatialEvent}s from. This is an instance of
      *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
      *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
      */
@@ -273,6 +307,14 @@ public class OpenSpatialService extends Service {
         }
     }
 
+    private void processDeviceInfoReceipt(Intent i) {
+        BluetoothDevice device = i.getParcelableExtra(OpenSpatialConstants.BLUETOOTH_DEVICE);
+        String infoType = i.getStringExtra(OpenSpatialConstants.INFO_TYPE);
+        Bundle data = i.getExtras();
+
+        mServiceCallback.deviceInfoReceived(device, infoType, data);
+    }
+
     private void processDeviceConnectionIntent(Intent intent) {
         BluetoothDevice device = intent.getParcelableExtra(OpenSpatialConstants.BLUETOOTH_DEVICE);
         if (device == null) {
@@ -281,8 +323,14 @@ public class OpenSpatialService extends Service {
         }
 
         if (intent.getAction().equals(OpenSpatialConstants.OPENSPATIAL_DEVICE_CONNECTED_INTENT_ACTION)) {
+            if (!mEventCallbacks.containsKey(device)) {
+                mEventCallbacks.put(device, null);
+            }
             mServiceCallback.deviceConnected(device);
         } else if (intent.getAction().equals(OpenSpatialConstants.OPENSPATIAL_DEVICE_DISCONNECTED_INTENT_ACTION)) {
+            if (!mEventCallbacks.containsKey(device)) {
+                mEventCallbacks.remove(device);
+            }
             mServiceCallback.deviceDisconnected(device);
         }
     }
@@ -350,5 +398,6 @@ public class OpenSpatialService extends Service {
         public void deviceDisconnected(BluetoothDevice device);
         public void eventRegistrationResult(BluetoothDevice device,
                                             OpenSpatialEvent.EventType eventType, int status);
+        public void deviceInfoReceived(BluetoothDevice device, String infoType, Bundle infoData);
     }
 }

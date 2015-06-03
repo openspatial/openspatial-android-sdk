@@ -37,16 +37,21 @@ public class OpenSpatialConstants {
     public static final String EVENT_TYPE = "net.openspatial.EVENT_TYPE";
     public static final String EVENT_UUID = "net.openspatial.EVENT_UUID";
     public static final String SET_REGISTRATION_STATUS = "net.openspatial.SET_REGISTRATION_STATUS";
+    public static final String INFO_TYPE = "net.openspatial.INFO_TYPE";
 
     // Actions for intents sent by the service
     public static final String OPENSPATIAL_LIST_DEVICES_INTENT_ACTION =
             "net.openspatial.OPENSPATIAL_LIST_DEVICES_INTENT_ACTION";
     public static final String OPENSPATIAL_CHANGE_REGISTRATION_STATE_INTENT_ACTION =
             "net.openspatial.OPENSPATIAL_CHANGE_REGISTRATION_STATE_INTENT_ACTION";
+    public static final String OPENSPATIAL_QUERY_DEVICE_INFO_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_QUERY_DEVICE_INFO_INTENT_ACTION";
 
     // Actions for events received by the service
     public static final String OPENSPATIAL_EVENT_INTENT_ACTION =
             "net.openspatial.OPENSPATIAL_EVENT_INTENT_ACTION";
+    public static final String OPENSPATIAL_DEVICE_INFO_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_DEVICE_INFO_INTENT_ACTION";
     public static final String OPENSPATIAL_DEVICE_CONNECTED_INTENT_ACTION =
             "net.openspatial.OPENSPATIAL_DEVICE_CONNECTED_INTENT_ACTION";
     public static final String OPENSPATIAL_DEVICE_DISCONNECTED_INTENT_ACTION =
@@ -55,11 +60,12 @@ public class OpenSpatialConstants {
     public static final String OPENSPATIAL_REGISTRATION_CHANGE_ATTEMPT_EVENT_RESULT =
             "net.openspatial.OPENSPATIAL_REGISTER_BUTTON_EVENT_RESULT";
 
-
     public static final String SKELETAL_LEFT_HAND = "skeletal.LEFT_HAND";
     public static final String SKELETAL_RIGHT_HAND = "skeletal.RIGHT_HAND";
     public static final String SKELETAL_LEFT_FOREARM = "skeletal.LEFT_FOREARM";
     public static final String SKELETAL_RIGHT_FOREARM = "skeletal.RIGHT_FOREARM";
     public static final String SKELETAL_LEFT_UPPER_ARM = "skeletal.LEFT_UPPER_ARM";
     public static final String SKELETAL_RIGHT_UPPER_ARM = "skeletal.RIGHT_UPPER_ARM";
+
+    public static final String INFO_BATTERY_LEVEL = "net.openspatial.INFO_BATTERY_LEVEL";
 }

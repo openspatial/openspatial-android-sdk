@@ -232,4 +232,9 @@ public class MainScreenActivity extends Activity implements OpenSpatialService.O
         Toast.makeText(this, type.name() + " registration status: " + status,
                 Toast.LENGTH_SHORT).show();
     }
+
+    @Override
+    public void deviceInfoReceived(BluetoothDevice device, String infoType, Bundle infoData) {
+
+    }
 }

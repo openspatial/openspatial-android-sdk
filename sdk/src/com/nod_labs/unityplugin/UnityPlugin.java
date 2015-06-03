@@ -35,6 +35,7 @@ import com.unity3d.player.UnityPlayerNativeActivity;
 import net.openspatial.AnalogDataEvent;
 import net.openspatial.ButtonEvent;
 import net.openspatial.GestureEvent;
+import net.openspatial.OpenSpatialConstants;
 import net.openspatial.OpenSpatialEvent;
 import net.openspatial.OpenSpatialException;
 import net.openspatial.OpenSpatialService;
@@ -65,6 +66,7 @@ public class UnityPlugin {
     private static Map<Integer, Integer> mButtonMap = new HashMap<Integer, Integer>();
     private static Map<Integer, Integer> mGestureMap = new HashMap<Integer, Integer>();
     private static Map<Integer, int[]> mAnalogDataMap = new HashMap<Integer, int[]>();
+    private static Map<Integer, Integer> mBatteryMap = new HashMap<Integer, Integer>();
 
     protected UnityPlugin() {}
 
@@ -93,6 +95,7 @@ public class UnityPlugin {
                     mButtonMap.put(deviceId, new Integer(0));
                     mGestureMap.put(deviceId, new Integer(-1));
                     mAnalogDataMap.put(deviceId, new int[3]);
+                    mBatteryMap.put(deviceId, new Integer(0));
                 }
 
                 @Override
@@ -106,6 +109,7 @@ public class UnityPlugin {
                         mButtonMap.put(deviceId, 0);
                         mGestureMap.put(deviceId, 0);
                         mAnalogDataMap.put(deviceId, new int[]{0, 0, 0});
+                        mBatteryMap.put(deviceId, 0);
                     }
                 }
 
@@ -113,6 +117,22 @@ public class UnityPlugin {
                 public void eventRegistrationResult(BluetoothDevice device,
                                                     OpenSpatialEvent.EventType type,
                                                     int status) {
+                }
+
+                @Override
+                public void deviceInfoReceived(BluetoothDevice device,
+                                               String infoType,
+                                               Bundle infoData) {
+                    if(infoType.equals(OpenSpatialConstants.INFO_BATTERY_LEVEL)) {
+                        int batteryLevel =
+                                infoData.getInt(OpenSpatialConstants.INFO_BATTERY_LEVEL);
+                        try {
+                            mBatteryMap.put(mDeviceIdMap.inverse().get(device), batteryLevel);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Failed to record battery level of device "
+                                    + device.getName());
+                        }
+                    }
                 }
             };
 
@@ -134,7 +154,7 @@ public class UnityPlugin {
         }
     };
 
-    public String nodGetName(int deviceId) {
+    public static String nodGetName(int deviceId) {
         BluetoothDevice device = mDeviceIdMap.get(deviceId);
         if(device == null) {
             Log.e(TAG, "Requested the name of an unknown device!");
@@ -447,6 +467,19 @@ public class UnityPlugin {
         }
 
         return true;
+    }
+
+    public static void requestBatteryLevel(int deviceId) {
+        try {
+            mOpenSpatialService.queryDeviceInfo(mDeviceIdMap.get(deviceId),
+                    OpenSpatialConstants.INFO_BATTERY_LEVEL);
+        } catch (Exception e) {
+            Log.d(TAG, "Failed to request battery level!");
+        }
+    }
+
+    public static int getBatteryLevel(int deviceId) {
+        return mBatteryMap.get(deviceId);
     }
 
     // Returns a boolean array of form [touch0, touch1, touch2]

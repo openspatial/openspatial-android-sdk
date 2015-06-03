@@ -21,7 +21,7 @@ import android.bluetooth.BluetoothDevice;
 import android.os.Parcel;
 
 /**
- * This event contains raw accelerometer and gyroscope readings along the 3 axes.
+ * This event contains analog data reported by joysticks or other actuators
  */
 public class AnalogDataEvent extends OpenSpatialEvent {
     /**
