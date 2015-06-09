@@ -43,6 +43,7 @@ import net.openspatial.PointerEvent;
 import net.openspatial.Pose6DEvent;
 import net.openspatial.Motion6DEvent;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -59,6 +60,7 @@ public class UnityPlugin {
     private static int mNextId = 0;
     private static BiMap<Integer, BluetoothDevice> mDeviceIdMap = HashBiMap.create();
 
+    private static Map<Integer, Boolean> mConnectedMap = new HashMap<Integer, Boolean>();
     private static Map<Integer, float[]> mRotationMap = new HashMap<Integer, float[]>();
     private static Map<Integer, float[]> mGyroMap = new HashMap<Integer, float[]>();
     private static Map<Integer, float[]> mAccelMap = new HashMap<Integer, float[]>();
@@ -88,6 +90,7 @@ public class UnityPlugin {
                     int deviceId = mNextId++;
                     mDeviceIdMap.put(deviceId, device);
 
+                    mConnectedMap.put(deviceId, true);
                     mRotationMap.put(deviceId, new float[3]);
                     mGyroMap.put(deviceId, new float[3]);
                     mAccelMap.put(deviceId, new float[3]);
@@ -102,6 +105,7 @@ public class UnityPlugin {
                 public void deviceDisconnected(BluetoothDevice device) {
                     Integer deviceId = mDeviceIdMap.inverse().get(device);
                     if (deviceId != null) {
+                        mConnectedMap.put(deviceId, false);
                         mRotationMap.put(deviceId, new float[]{0.0f, 0.0f, 0.0f});
                         mGyroMap.put(deviceId, new float[]{0.0f, 0.0f, 0.0f});
                         mAccelMap.put(deviceId, new float[]{0.0f, 0.0f, 0.0f});
@@ -168,8 +172,16 @@ public class UnityPlugin {
         return Ints.toArray(mDeviceIdMap.keySet());
     }
 
-    public static int getNumDevices(){
-        return mDeviceIdMap.size();
+    public static int getNumDevices() {
+        Collection<Boolean> connected = mConnectedMap.values();
+
+        int result = 0;
+
+        for (Boolean connState : connected) {
+            result += connState ? 1 : 0;
+        }
+
+        return result;
     }
 
     public static String getDeviceAddress(int deviceId) {
