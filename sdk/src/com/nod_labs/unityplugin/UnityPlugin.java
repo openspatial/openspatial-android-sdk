@@ -86,9 +86,14 @@ public class UnityPlugin {
                 public void deviceConnected(BluetoothDevice device) {
                     Log.d(TAG, "Connected to device: " + device.getAddress());
 
-                    // FIXME: not ideal for generating id, use hash of address
-                    int deviceId = mNextId++;
-                    mDeviceIdMap.put(deviceId, device);
+                    int deviceId;
+                    if (mDeviceIdMap.containsValue(device)) {
+                        deviceId = mDeviceIdMap.inverse().get(device);
+                    } else {
+                        // FIXME: not ideal for generating id, use hash of address
+                        deviceId = mNextId++;
+                        mDeviceIdMap.put(deviceId, device);
+                    }
 
                     mConnectedMap.put(deviceId, true);
                     mRotationMap.put(deviceId, new float[3]);
