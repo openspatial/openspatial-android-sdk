@@ -186,7 +186,8 @@ public class OpenSpatialEventFactory {
     public AnalogDataEvent getAnalogDataEventFromCharacteristic(BluetoothDevice device,
                                                                 byte[] value) {
         ByteBuffer buffer = ByteBuffer.wrap(value);
-
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+        
         short joystickX = buffer.getShort();
         short joystickY = buffer.getShort();
         short trigger = buffer.getShort();
