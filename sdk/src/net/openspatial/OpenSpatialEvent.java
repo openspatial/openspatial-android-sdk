@@ -115,6 +115,11 @@ abstract public class OpenSpatialEvent implements Parcelable {
         public void onEventReceived(OpenSpatialEvent event);
     }
 
+    @Override
+    public String toString() {
+        return "Device: " + this.device.getName() + ", Event Type: " + this.eventType.name();
+    }
+
     /**
      * Create an {@code OpenSpatialEvent} with a given type
      * @param type The type of the event

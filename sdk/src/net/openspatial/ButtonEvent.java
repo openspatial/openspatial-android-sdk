@@ -95,6 +95,11 @@ public class ButtonEvent extends OpenSpatialEvent {
         buttonEventType = type;
     }
 
+    @Override
+    public String toString() {
+        return super.toString() + ", Button Event: " + this.buttonEventType.name();
+    }
+
     // Methods for making the class Parcelable
     @Override
     public int describeContents() {

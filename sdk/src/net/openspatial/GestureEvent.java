@@ -94,6 +94,11 @@ public class GestureEvent extends OpenSpatialEvent {
         this.magnitude = magnitude;
     }
 
+    @Override
+    public String toString() {
+        return super.toString() + ", Gesture Type: " + this.gestureEventType.name();
+    }
+
     // Methods for making the class Parcelable
     @Override
     public int describeContents() {

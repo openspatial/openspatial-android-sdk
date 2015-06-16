@@ -50,6 +50,12 @@ public class AnalogDataEvent extends OpenSpatialEvent {
         this.trigger = trigger;
     }
 
+    @Override
+    public String toString() {
+        return super.toString() + ", JoystickX: " + this.joystickX + ", JoystickY: "
+                + this.joystickY + ", Trigger: " + this.trigger;
+    }
+    
     // Methods to make this class Parcelable
     @Override
     public int describeContents() {

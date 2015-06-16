@@ -71,6 +71,11 @@ public class PointerEvent extends OpenSpatialEvent {
         this.y = y;
     }
 
+    @Override
+    public String toString() {
+        return super.toString() + ", Pointer Event Type: " + this.pointerEventType.name()
+                + ", X: " + this.x + ", Y: " + this.y;
+    }
     // Methods to make the class Parcelable
     @Override
     public int describeContents() {

@@ -125,6 +125,12 @@ public class Pose6DEvent extends OpenSpatialEvent {
         return mEulerAngle;
     }
 
+    @Override
+    public String toString() {
+        return super.toString() + ", X/Y/Z: " + this.x + " " + this.y + " " + this.z
+                + ", Roll/Pitch/Yaw: " + this.roll + " " + this.pitch + " " + this.yaw;
+    }
+
     // Methods to make this class Parcelable
     @Override
     public int describeContents() {

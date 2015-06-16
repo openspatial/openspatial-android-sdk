@@ -75,6 +75,13 @@ public class Motion6DEvent extends OpenSpatialEvent {
         this.gyroZ = gyroZ;
     }
 
+    @Override
+    public String toString() {
+        return super.toString()
+                + ", AccelX/Y/Z: " + this.accelX + " " + this.accelY + " " + this.accelZ
+                + ", GyroX/Y/Z: " + this.gyroX + " " + this.gyroY + " " + this.gyroZ;
+    }
+
     // Methods to make this class Parcelable
     @Override
     public int describeContents() {
