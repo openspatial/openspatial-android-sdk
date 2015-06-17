@@ -102,7 +102,7 @@ public class UnityPlugin {
                     mPointerMap.put(deviceId, new int[2]);
                     mButtonMap.put(deviceId, new Integer(0));
                     mGestureMap.put(deviceId, new Integer(-1));
-                    mAnalogDataMap.put(deviceId, new int[3]);
+                    mAnalogDataMap.put(deviceId, new int[]{128, 128, 255});
                     mBatteryMap.put(deviceId, new Integer(0));
                 }
 
@@ -117,7 +117,7 @@ public class UnityPlugin {
                         mPointerMap.put(deviceId, new int[]{0, 0});
                         mButtonMap.put(deviceId, 0);
                         mGestureMap.put(deviceId, 0);
-                        mAnalogDataMap.put(deviceId, new int[]{0, 0, 0});
+                        mAnalogDataMap.put(deviceId, new int[]{128, 128, 255});
                         mBatteryMap.put(deviceId, 0);
                     }
                 }
