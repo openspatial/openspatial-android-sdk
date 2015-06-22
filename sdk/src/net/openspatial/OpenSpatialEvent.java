@@ -66,6 +66,12 @@ abstract public class OpenSpatialEvent implements Parcelable {
          * @see net.openspatial.AnalogDataEvent
          */
         EVENT_ANALOGDATA,
+
+        /**
+         * Extended event
+         * @see net.openspatial.ExtendedEvent
+         */
+        EVENT_EXTENDED,
     }
 
     public static final Map<EventType, String> EVENT_UUID_MAP = new HashMap<EventType, String>();

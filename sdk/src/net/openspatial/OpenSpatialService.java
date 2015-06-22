@@ -161,11 +161,13 @@ public class OpenSpatialService extends Service {
     }
 
     private void sendIntent(BluetoothDevice device, String action,
-                            OpenSpatialEvent.EventType eventType, boolean setRegistered) {
+                            OpenSpatialEvent.EventType eventType, String extendedEventCategory,
+                            boolean setRegistered) {
         Intent intent = new Intent(action);
         intent.putExtra(OpenSpatialConstants.BLUETOOTH_DEVICE, device);
         intent.putExtra(OpenSpatialConstants.IDENTIFIER, mIdentifier);
         intent.putExtra(OpenSpatialConstants.EVENT_TYPE, eventType);
+        intent.putExtra(OpenSpatialConstants.EXTENDED_EVENT_CATEGORY, extendedEventCategory);
         intent.putExtra(OpenSpatialConstants.EVENT_UUID,
                 OpenSpatialEvent.EVENT_UUID_MAP.get(eventType));
         intent.putExtra(OpenSpatialConstants.SET_REGISTRATION_STATUS, setRegistered);
@@ -240,9 +242,30 @@ public class OpenSpatialService extends Service {
         }
 
         sendIntent(device, OpenSpatialConstants.OPENSPATIAL_CHANGE_REGISTRATION_STATE_INTENT_ACTION,
-                eventType, true);
+                eventType, null, true);
     }
 
+    /**
+     * Register for {@link net.openspatial.OpenSpatialEvent}s from the specified {@code device}
+     * @param device The device to listen for {@code OpenSpatialEvent}s from. This is an instance of
+     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
+     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     * @param eventType The OpenSpatial event type that you are interested in receiving
+     * @param listener An instance of {@link net.openspatial.OpenSpatialEvent.EventListener}. When an
+     *                 {@link net.openspatial.OpenSpatialEvent} is received, the {@code onEventReceived} method is
+     *                 called
+     */
+    public void registerForEvents(BluetoothDevice device, OpenSpatialEvent.EventType eventType,
+                                  String extendedEventCategory,
+                                  OpenSpatialEvent.EventListener listener)
+            throws OpenSpatialException {
+        synchronized (mEventCallbacks) {
+            registerCallback(mEventCallbacks, device, eventType, listener);
+        }
+
+        sendIntent(device, OpenSpatialConstants.OPENSPATIAL_CHANGE_REGISTRATION_STATE_INTENT_ACTION,
+                eventType, extendedEventCategory, true);
+    }
     /**
      * Query information from the specified {@code device}
      * @param device The device to request info for. This is an instance of
@@ -270,7 +293,24 @@ public class OpenSpatialService extends Service {
     public void unregisterForEvents(BluetoothDevice device, OpenSpatialEvent.EventType eventType)
             throws OpenSpatialException {
         sendIntent(device, OpenSpatialConstants.OPENSPATIAL_CHANGE_REGISTRATION_STATE_INTENT_ACTION,
-                eventType, false);
+                eventType, null, false);
+
+        synchronized (mEventCallbacks) {
+            unRegisterCallback(mEventCallbacks, device, eventType);
+        }
+    }
+
+    /**
+     * Unregister for {@link net.openspatial.OpenSpatialEvent}s from the specified {@code device}
+     * @param device The device to stop listening for {@code OpenSpatialEvent}s from. This is an instance of
+     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
+     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     */
+    public void unregisterForEvents(BluetoothDevice device, OpenSpatialEvent.EventType eventType,
+                                    String extendedEventCategory)
+            throws OpenSpatialException {
+        sendIntent(device, OpenSpatialConstants.OPENSPATIAL_CHANGE_REGISTRATION_STATE_INTENT_ACTION,
+                eventType, extendedEventCategory, false);
 
         synchronized (mEventCallbacks) {
             unRegisterCallback(mEventCallbacks, device, eventType);

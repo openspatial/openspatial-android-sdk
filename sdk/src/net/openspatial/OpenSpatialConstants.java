@@ -38,6 +38,7 @@ public class OpenSpatialConstants {
     public static final String EVENT_UUID = "net.openspatial.EVENT_UUID";
     public static final String SET_REGISTRATION_STATUS = "net.openspatial.SET_REGISTRATION_STATUS";
     public static final String INFO_TYPE = "net.openspatial.INFO_TYPE";
+    public static final String EXTENDED_EVENT_CATEGORY = "net.openspatial.EXTENDED_EVENT_CATEGORY";
 
     // Actions for intents sent by the service
     public static final String OPENSPATIAL_LIST_DEVICES_INTENT_ACTION =

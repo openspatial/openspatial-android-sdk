@@ -12,6 +12,7 @@ public class EventCallbacks {
     OpenSpatialEvent.EventListener mMotion6DEventCallback = null;
     OpenSpatialEvent.EventListener mGestureEventCallback = null;
     OpenSpatialEvent.EventListener mAnalogDataEventCallback = null;
+    OpenSpatialEvent.EventListener mExtendedEventCallback = null;
 
     /**
      * Get the registered callback that corresponds to the event type supplied as an argument
@@ -35,6 +36,8 @@ public class EventCallbacks {
                 return mPose6DEventCallback;
             case EVENT_ANALOGDATA:
                 return mAnalogDataEventCallback;
+            case EVENT_EXTENDED:
+                return mExtendedEventCallback;
             default:
                 return null;
         }
@@ -72,6 +75,9 @@ public class EventCallbacks {
                 mPose6DEventCallback = callback;
                 break;
             case EVENT_ANALOGDATA:
+                mAnalogDataEventCallback = callback;
+                break;
+            case EVENT_EXTENDED:
                 mAnalogDataEventCallback = callback;
                 break;
         }
