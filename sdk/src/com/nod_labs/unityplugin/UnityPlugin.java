@@ -42,6 +42,7 @@ import net.openspatial.OpenSpatialService;
 import net.openspatial.PointerEvent;
 import net.openspatial.Pose6DEvent;
 import net.openspatial.Motion6DEvent;
+import net.openspatial.ExtendedEvent;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -68,6 +69,7 @@ public class UnityPlugin {
     private static Map<Integer, Integer> mButtonMap = new HashMap<Integer, Integer>();
     private static Map<Integer, Integer> mGestureMap = new HashMap<Integer, Integer>();
     private static Map<Integer, int[]> mAnalogDataMap = new HashMap<Integer, int[]>();
+    private static Map<Integer, Integer> mExtendedMap = new HashMap<Integer, Integer>();
     private static Map<Integer, Integer> mBatteryMap = new HashMap<Integer, Integer>();
 
     protected UnityPlugin() {}
@@ -103,6 +105,7 @@ public class UnityPlugin {
                     mButtonMap.put(deviceId, new Integer(0));
                     mGestureMap.put(deviceId, new Integer(-1));
                     mAnalogDataMap.put(deviceId, new int[]{128, 128, 255});
+                    mExtendedMap.put(deviceId, 0);
                     mBatteryMap.put(deviceId, new Integer(0));
                 }
 
@@ -118,6 +121,7 @@ public class UnityPlugin {
                         mButtonMap.put(deviceId, 0);
                         mGestureMap.put(deviceId, 0);
                         mAnalogDataMap.put(deviceId, new int[]{128, 128, 255});
+                        mExtendedMap.put(deviceId, 0);
                         mBatteryMap.put(deviceId, 0);
                     }
                 }
@@ -357,6 +361,32 @@ public class UnityPlugin {
         return true;
     }
 
+    public static boolean registerForExtendedEvents(final int deviceId, final String type) {
+        final BluetoothDevice device = mDeviceIdMap.get(deviceId);
+
+        if (device == null) {
+            Log.e(TAG, "Register for Motion6D events failed: No device with id=" + deviceId);
+            return false;
+        }
+
+        try {
+            mOpenSpatialService.registerForEvents(device, OpenSpatialEvent.EventType.EVENT_EXTENDED,
+                    type, new OpenSpatialEvent.EventListener() {
+                        @Override
+                        public void onEventReceived(OpenSpatialEvent event) {
+                            ExtendedEvent extendedEvent = (ExtendedEvent) event;
+                            Integer value = mExtendedMap.get(deviceId);
+                            value = extendedEvent.eventId;
+                        }
+                    });
+        } catch (OpenSpatialException e) {
+            Log.e(TAG, "Register for Motion6D events failed: " + e.getMessage());
+            return false;
+        }
+
+        return true;
+    }
+
     public static boolean registerForGestureEvents(final int deviceId) {
         final BluetoothDevice device = mDeviceIdMap.get(deviceId);
         if (device == null) {
@@ -486,6 +516,23 @@ public class UnityPlugin {
         return true;
     }
 
+    public static boolean unregisterFromExtendedEvents(int deviceId, String type) {
+        final BluetoothDevice device = mDeviceIdMap.get(deviceId);
+        if (device == null) {
+            Log.e(TAG, "Unregister from Extended events failed: No device with id=" + deviceId);
+            return false;
+        }
+        try {
+            mOpenSpatialService.unregisterForEvents(device,
+                    OpenSpatialEvent.EventType.EVENT_EXTENDED, type);
+        } catch (OpenSpatialException e) {
+            Log.e(TAG, "Unregister from Extended events failed: " + e.getMessage());
+            return false;
+        }
+
+        return true;
+    }
+
     public static void requestBatteryLevel(int deviceId) {
         try {
             mOpenSpatialService.queryDeviceInfo(mDeviceIdMap.get(deviceId),
@@ -536,6 +583,13 @@ public class UnityPlugin {
     // Returns a float array of form [accelX, accelY, accelZ] (units: G's)
     public static float[] getAccelData(int deviceId) {
         return mAccelMap.get(deviceId);
+    }
+
+    // Returns an int corresponding to an ExtendedEvent
+    public static int getExtendedData(int deviceId) {
+        int result =  mExtendedMap.get(deviceId);
+        mExtendedMap.put(deviceId, 0);
+        return result;
     }
 
     public static int getGestureData(int deviceId) {

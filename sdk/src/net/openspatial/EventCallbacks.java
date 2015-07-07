@@ -78,7 +78,7 @@ public class EventCallbacks {
                 mAnalogDataEventCallback = callback;
                 break;
             case EVENT_EXTENDED:
-                mAnalogDataEventCallback = callback;
+                mExtendedEventCallback = callback;
                 break;
         }
     }
