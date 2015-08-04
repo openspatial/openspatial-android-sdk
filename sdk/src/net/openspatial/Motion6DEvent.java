@@ -22,7 +22,10 @@ import android.os.Parcel;
 
 /**
  * This event contains raw accelerometer and gyroscope readings along the 3 axes.
+ *
+ * @deprecated use {@link TranslationData} and/or {@link GyroscopeData} instead.
  */
+@Deprecated
 public class Motion6DEvent extends OpenSpatialEvent {
     /**
      * The accelerometer reading along the X axis

@@ -1,10 +1,26 @@
+/*
+ * Copyright 2015, Nod Labs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package net.openspatial;
 
 /**
- * An {@code EventCallbacks} represents the set of callbacks registered to a given device and
+ * Contains the set of callbacks registered to a given device and
  * provides the methods required to access or set them.
  */
-public class EventCallbacks {
+class EventCallbacks {
 
     OpenSpatialEvent.EventListener mPointerEventCallback = null;
     OpenSpatialEvent.EventListener mButtonEventCallback = null;
@@ -13,6 +29,7 @@ public class EventCallbacks {
     OpenSpatialEvent.EventListener mGestureEventCallback = null;
     OpenSpatialEvent.EventListener mAnalogDataEventCallback = null;
     OpenSpatialEvent.EventListener mExtendedEventCallback = null;
+    OpenSpatialDataListener mOpenSpatialDataListener = null;
 
     /**
      * Get the registered callback that corresponds to the event type supplied as an argument
@@ -21,7 +38,10 @@ public class EventCallbacks {
      *                   corresponds to.
      *
      * @return The registered callback that is associated with the specified event type
+     *
+     * @deprecated use {@link #getCallback()} instead.
      */
+    @Deprecated
     public OpenSpatialEvent.EventListener getCallback(OpenSpatialEvent.EventType eventType) {
         switch (eventType) {
             case EVENT_BUTTON:
@@ -44,13 +64,34 @@ public class EventCallbacks {
     }
 
     /**
+     * Get the callback that triggers upon receipt of an {@code OpenSpatialData}
+     *
+     * @return The callback registered by the client
+     */
+    protected OpenSpatialDataListener getCallback() {
+        return mOpenSpatialDataListener;
+    }
+
+    /**
+     * Get the registered callback that corresponds to the event type supplied as an argument.
+     *
+     * @param listener The listener that will report the receipt of data from an OpenSpatial device.
+     */
+    protected void setCallback(OpenSpatialDataListener listener) {
+        mOpenSpatialDataListener = listener;
+    }
+
+    /**
      * Get the registered callback that corresponds to the event type supplied as an argument
      *
      * @param eventType  The type of {@code OpenSpatialEvent} that the returned callback will be
      *                   registered for.
+     * @param callback The callback to be set.
+     * @throws OpenSpatialException If eventType is null;
      *
-     * @return The registered callback that is associated with the specified event type
+     * @deprecated use {@link #setCallback(OpenSpatialDataListener)} instead.
      */
+    @Deprecated
     public void setCallback(OpenSpatialEvent.EventType eventType,
                             OpenSpatialEvent.EventListener callback)
             throws OpenSpatialException {

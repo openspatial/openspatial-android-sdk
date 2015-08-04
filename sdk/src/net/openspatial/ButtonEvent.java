@@ -24,11 +24,15 @@ import android.os.Parcel;
  * touched/pressed. A touch or button press produces the corresponding {@code _DOWN} event. The release produces the
  * corresponding {@code _UP} event.
  *
+ * @deprecated use {@link ButtonData} instead.
  */
+@Deprecated
 public class ButtonEvent extends OpenSpatialEvent {
     /**
      * Various types of {@code _UP} and {@code _DOWN} events
+     *
      */
+    @Deprecated
     public enum ButtonEventType {
         /**
          * TOUCH0 was touched

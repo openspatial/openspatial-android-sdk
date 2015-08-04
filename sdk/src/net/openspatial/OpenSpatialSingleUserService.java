@@ -28,6 +28,7 @@ import android.util.Log;
 import java.util.*;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
+@Deprecated
 public class OpenSpatialSingleUserService extends Service {
     public class OpenSpatialSingleUserServiceBinder extends Binder {
         public OpenSpatialSingleUserService getService() {
@@ -321,8 +322,7 @@ public class OpenSpatialSingleUserService extends Service {
     /**
      * Register for {@link net.openspatial.ButtonEvent}s from the specified {@code device}
      * @param device The device to listen for {@code ButtonEvent}s from. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
-     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     *               {@link BluetoothDevice}. Use null if you're using the emulator service.
      * @param listener An instance of {@link net.openspatial.OpenSpatialEvent.EventListener}. When an
      *                 {@link net.openspatial.OpenSpatialEvent} is received, the {@code onEventReceived} method is
      *                 called
@@ -345,8 +345,7 @@ public class OpenSpatialSingleUserService extends Service {
     /**
      * Register for {@link net.openspatial.PointerEvent}s from the specified {@code device}
      * @param device The device to listen for {@code PointerEvent}s from. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
-     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     *               {@link BluetoothDevice}. Use null if you're using the emulator service.
      * @param listener An instance of {@link net.openspatial.OpenSpatialEvent.EventListener}. When an
      *                 {@link net.openspatial.OpenSpatialEvent} is received, the {@code onEventReceived} method is
      *                 called
@@ -369,8 +368,7 @@ public class OpenSpatialSingleUserService extends Service {
     /**
      * Register for {@link net.openspatial.Pose6DEvent}s from the specified {@code device}
      * @param device The device to listen for {@code Pose6DEvent}s from. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
-     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     *               {@link BluetoothDevice}. Use null if you're using the emulator service.
      * @param listener An instance of {@link net.openspatial.OpenSpatialEvent.EventListener}. When an
      *                 {@link net.openspatial.OpenSpatialEvent} is received, the {@code onEventReceived} method is
      *                 called
@@ -393,7 +391,7 @@ public class OpenSpatialSingleUserService extends Service {
     /**
      * Register for {@link net.openspatial.GestureEvent}s for the given device
      * @param device The device to listen for {@code GestureEvent}s from. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
+     *               {@link BluetoothDevice}
      * @param listener An instance of {@link net.openspatial.OpenSpatialEvent.EventListener}. When an
      *                 {@link net.openspatial.OpenSpatialEvent} is received, the {@code onEventReceived} method is
      *                 called
@@ -416,8 +414,7 @@ public class OpenSpatialSingleUserService extends Service {
     /**
      * Register for {@link net.openspatial.Motion6DEvent}s from the specified {@code device}
      * @param device The device to listen for {@code Motion6DEvent}s from. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
-     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     *               {@link BluetoothDevice}. Use null if you're using the emulator service.
      * @param listener An instance of {@link net.openspatial.OpenSpatialEvent.EventListener}. When an
      *                 {@link net.openspatial.OpenSpatialEvent} is received, the {@code onEventReceived} method is
      *                 called
@@ -440,8 +437,7 @@ public class OpenSpatialSingleUserService extends Service {
     /**
      * Unregister for {@link net.openspatial.ButtonEvent}s from the specified {@code device}
      * @param device The device to stop listening for {@code ButtonEvent}s from. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
-     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     *               {@link BluetoothDevice}. Use null if you're using the emulator service.
      */
     public void unRegisterForButtonEvents(BluetoothDevice device) throws OpenSpatialException {
         synchronized (mButtonEventCallbacks) {
@@ -454,8 +450,7 @@ public class OpenSpatialSingleUserService extends Service {
     /**
      * Unregister for {@link net.openspatial.PointerEvent}s from the specified {@code device}
      * @param device The device to stop listening for {@code PointerEvent}s from. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
-     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     *               {@link BluetoothDevice}. Use null if you're using the emulator service.
      */
     public void unRegisterForPointerEvents(BluetoothDevice device) throws OpenSpatialException {
         synchronized (mPointerEventCallbacks) {
@@ -468,8 +463,7 @@ public class OpenSpatialSingleUserService extends Service {
     /**
      * Unregister for {@link net.openspatial.Pose6DEvent}s from the specified {@code device}
      * @param device The device to stop listening for {@code Pose6DEvents}s from. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
-     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     *               {@link BluetoothDevice}. Use null if you're using the emulator service.
      */
     public void unRegisterForPose6DEvents(BluetoothDevice device) throws OpenSpatialException {
         synchronized (m3DRotationEventCallbacks) {
@@ -482,8 +476,7 @@ public class OpenSpatialSingleUserService extends Service {
     /**
      * Unregister for {@link net.openspatial.GestureEvent}s from the specified {@code device}
      * @param device The device to stop listening for {@code GestureEvent}s from. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
-     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     *               {@link BluetoothDevice}. Use null if you're using the emulator service.
      * @throws OpenSpatialException
      */
     public void unRegisterForGestureEvents(BluetoothDevice device)
@@ -498,8 +491,7 @@ public class OpenSpatialSingleUserService extends Service {
     /**
      * Unregister for {@link net.openspatial.Motion6DEvent}s from the specified {@code device}
      * @param device The device to stop listening for {@code Motion6DEvents}s from. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
-     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     *               {@link BluetoothDevice}. Use null if you're using the emulator service.
      */
     public void unRegisterForMotion6DEvents(BluetoothDevice device) throws OpenSpatialException {
         synchronized (mMotion6DEventCallbacks) {
@@ -509,6 +501,7 @@ public class OpenSpatialSingleUserService extends Service {
         }
     }
 
+    @Deprecated
     public interface OpenSpatialSingleUserServiceCallback {
         public void deviceConnected(BluetoothDevice device);
         public void deviceConnectFailed(BluetoothDevice device, int status);

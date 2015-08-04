@@ -25,11 +25,17 @@ import java.util.Map;
 
 /**
  * The base class for all events delivered over the {@link net.openspatial.OpenSpatialService}
+ *
+ * @deprecated use {@link OpenSpatialData} instead.
  */
+
+@Deprecated
 abstract public class OpenSpatialEvent implements Parcelable {
     /**
      * Type of the event.
+     * @deprecated use {@link DataType} instead.
      */
+    @Deprecated
     public enum EventType {
         /**
          * Button event
@@ -110,7 +116,10 @@ abstract public class OpenSpatialEvent implements Parcelable {
 
     /**
      * A listener interface for clients interested in {@link net.openspatial.OpenSpatialEvent}s
+     *
+     * @deprecated use {@link OpenSpatialDataListener} instead.
      */
+    @Deprecated
     public interface EventListener {
         /**
          * Callback method that is called when a new {@link net.openspatial.OpenSpatialEvent} is received
@@ -118,7 +127,7 @@ abstract public class OpenSpatialEvent implements Parcelable {
          * @param event The {@code OpenSpatialEvent} that was received
          *
          */
-        public void onEventReceived(OpenSpatialEvent event);
+        void onEventReceived(OpenSpatialEvent event);
     }
 
     @Override

@@ -16,10 +16,29 @@
 
 package net.openspatial;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * A group of constants that serve as a reference to error states.
+ * An enumeration of the possible slider values an OpenSpatial device can report
  */
-public class OpenSpatialErrorCodes {
-    public static final int SUCCESS = 0;
-    public static final int FAILURE = 1;
+public enum SliderType {
+    SLIDE_DOWN(0x1),
+    SLIDE_UP(0x2);
+
+    private final byte id;
+    SliderType(int id) { this.id = (byte) id; }
+    public byte getValue() { return id; }
+
+    private static Map<Byte, SliderType> map = new HashMap<Byte, SliderType>();
+
+    static {
+        for (SliderType type : SliderType.values()) {
+            map.put(type.id, type);
+        }
+    }
+
+    public static SliderType valueOf(byte id) {
+        return map.get(id);
+    }
 }

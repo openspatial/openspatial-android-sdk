@@ -18,6 +18,9 @@ package net.openspatial;
 
 import android.bluetooth.BluetoothDevice;
 
+/**
+ * Constants referred to by various parts of OpenSpatial
+ */
 public class OpenSpatialConstants {
     public static final String OPENSPATIAL_SERVICE_UUID = "00000002-0000-1000-8000-a0e5e9000000";
 
@@ -28,6 +31,9 @@ public class OpenSpatialConstants {
     public static final String OPENSPATIAL_MOTION_6D_CHARACTERISTIC = "00000209-0000-1000-8000-A0E5E9000000";
     public static final String OPENSPATIAL_ANALOGDATA_CHARACTERISTIC = "0000020C-0000-1000-8000-A0E5E9000000";
 
+    public static final String OPENSPATIAL_CONTROL_CHARACTERISTIC = "0000020A-0000-1000-8000-A0E5E9000000";
+    public static final String OPENSPATIAL_DATA_CHARACTERISTIC = "0000020B-0000-1000-8000-A0E5E9000000";
+
     public static final BluetoothDevice EMULATOR_DEVICE = null;
 
     public static final String BLUETOOTH_DEVICE = "net.openspatial.BLUETOOTH_DEVICE";
@@ -35,6 +41,7 @@ public class OpenSpatialConstants {
     public static final String IDENTIFIER = "net.openspatial.IDENTIFIER";
     public static final String STATUS = "net.openspatial.STATUS";
     public static final String EVENT_TYPE = "net.openspatial.EVENT_TYPE";
+    public static final String DATA_TYPES = "net.openspatial.DATA_TYPES";
     public static final String EVENT_UUID = "net.openspatial.EVENT_UUID";
     public static final String SET_REGISTRATION_STATUS = "net.openspatial.SET_REGISTRATION_STATUS";
     public static final String INFO_TYPE = "net.openspatial.INFO_TYPE";
@@ -51,6 +58,9 @@ public class OpenSpatialConstants {
     // Actions for events received by the service
     public static final String OPENSPATIAL_EVENT_INTENT_ACTION =
             "net.openspatial.OPENSPATIAL_EVENT_INTENT_ACTION";
+    // Actions for events received by the service
+    public static final String OPENSPATIAL_DATA_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_DATA_INTENT_ACTION";
     public static final String OPENSPATIAL_DEVICE_INFO_INTENT_ACTION =
             "net.openspatial.OPENSPATIAL_DEVICE_INFO_INTENT_ACTION";
     public static final String OPENSPATIAL_DEVICE_CONNECTED_INTENT_ACTION =

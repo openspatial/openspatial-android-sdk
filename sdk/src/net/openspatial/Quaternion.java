@@ -19,7 +19,9 @@ package net.openspatial;
 /**
  * This class represents a rotation in 3D space as a quaternion.
  * @see <a href="http://en.wikipedia.org/wiki/Quaternion">Quaternion</a>
+ * @deprecated
  */
+@Deprecated
 public class Quaternion {
     /**
      * x value

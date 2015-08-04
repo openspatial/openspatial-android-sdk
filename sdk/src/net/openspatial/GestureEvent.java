@@ -21,14 +21,19 @@ import android.os.Parcel;
 
 /**
  * A {@code GestureEvent} respresents an instance of a "Gesture". A Gesture is a combination of
- * {@link net.openspatial.ButtonEvent}s and {@link net.openspatial.RotationEvent}s. When an event is recognized,
+ * {@link net.openspatial.ButtonEvent}s and {@link net.openspatial.EulerAngle}s. When an event is recognized,
  * a GestureEvent of the given {@code GestureEventType} is fired.
+ *
+ * @deprecated use {@link GestureData} instead.
  */
+@Deprecated
 public class GestureEvent extends OpenSpatialEvent {
 
     /**
      * The currently supported Gestures
+     * @deprecated use {@link GestureType} instead.
      */
+    @Deprecated
     public enum GestureEventType {
         /**
          * The user swiped down

@@ -28,7 +28,10 @@ import java.lang.Math;
  * @see net.openspatial.Quaternion
  * @see net.openspatial.EulerAngle
  * @see <a href="http://en.wikipedia.org/wiki/Rotation_matrix#In_three_dimensions">Rotation Matrix</a>
+ *
+ * @deprecated use {@link TranslationData} and/or {@link EulerData} instead.
  */
+@Deprecated
 public class Pose6DEvent extends OpenSpatialEvent {
     /**
      * The delta translation along the X axis

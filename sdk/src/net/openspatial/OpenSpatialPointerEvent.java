@@ -19,6 +19,7 @@ package net.openspatial;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+@Deprecated
 public class OpenSpatialPointerEvent {
     public static final String TAG = OpenSpatialPointerEvent.class.getSimpleName();
 

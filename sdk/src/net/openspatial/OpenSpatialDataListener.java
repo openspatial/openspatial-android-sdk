@@ -17,9 +17,15 @@
 package net.openspatial;
 
 /**
- * A group of constants that serve as a reference to error states.
+ * A listener interface for clients interested in {@link OpenSpatialData}.
  */
-public class OpenSpatialErrorCodes {
-    public static final int SUCCESS = 0;
-    public static final int FAILURE = 1;
+public interface OpenSpatialDataListener {
+    /**
+     * Callback method that is called when new {@link OpenSpatialData}
+     * is received.
+     *
+     * @param data The {@code OpenSpatialData} that was received.
+     *
+     */
+    void onDataReceived(OpenSpatialData data);
 }

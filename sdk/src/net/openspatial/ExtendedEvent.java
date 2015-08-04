@@ -23,6 +23,7 @@ import android.os.Parcel;
 /**
  * This event is used to describe vendor specific or proprietary extensions to the OpenSpatial API
  */
+@Deprecated
 public class ExtendedEvent extends OpenSpatialEvent {
     /**
      * The identifier used to specify what extended event took place

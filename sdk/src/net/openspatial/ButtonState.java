@@ -17,9 +17,9 @@
 package net.openspatial;
 
 /**
- * A group of constants that serve as a reference to error states.
+ * An enumeration of possible button states.
  */
-public class OpenSpatialErrorCodes {
-    public static final int SUCCESS = 0;
-    public static final int FAILURE = 1;
+public enum ButtonState {
+    DOWN,
+    UP,
 }

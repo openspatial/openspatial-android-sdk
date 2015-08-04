@@ -25,11 +25,16 @@ import android.os.Parcel;
  * specify the change in the position of the pointer relative to its previous position. In an {@code ABSOLUTE}
  * {@code PointerEvent}, {@code x} and {@code y} specify the current position of the pointer irrespective of its
  * previous position.
+ *
+ * @deprecated use {@link RelativeXYData} instead.
  */
+@Deprecated
 public class PointerEvent extends OpenSpatialEvent {
     /**
      * The type of the {@code PointerEvent}
+     * @deprecated
      */
+    @Deprecated
     public enum PointerEventType {
         /**
          * The event specifies translation along the x and y axis relative to the previous position of the pointer

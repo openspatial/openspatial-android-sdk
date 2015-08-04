@@ -20,7 +20,11 @@ package net.openspatial;
  * This class represents a rotation in 3D space as a triplet of axes angles. The rotation axis used is x-y-z. The
  * coordinate orientation is right handed with z facing up. All angles are in radians.
  * @see <a href="http://en.wikipedia.org/wiki/Euler_angles">Euler Angles</a>
+ *
+ * @deprecated use {@link EulerData} instead.
  */
+
+@Deprecated
 public class EulerAngle {
     /**
      * Create an Euler angle with {@code roll}, {@code pitch} and {@code yaw} initialized to 0

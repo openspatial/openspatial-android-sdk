@@ -17,35 +17,35 @@
 package net.openspatial;
 
 /**
- * Exception thrown for failure cases in the OpenSpatialService
+ * Exception thrown for failure cases in the OpenSpatialService.
  */
 public class OpenSpatialException extends Exception {
     /**
-     * Error codes for the different error conditions
+     * Error codes for the different error conditions.
      */
     public enum ErrorCode {
         /**
-         * The device is not currently registered
+         * The device is not currently registered.
          */
         DEVICE_NOT_REGISTERED,
 
         /**
-         * The device is already registered for the given callback
+         * The device is already registered for the given callback.
          */
         DEVICE_ALREADY_REGISTERED,
 
         /**
-         * Bluetooth not supported
+         * Bluetooth not supported.
          */
         BLUETOOTH_NOT_SUPPORTED,
 
         /**
-         * Bluetooth not on
+         * Bluetooth not on.
          */
         BLUETOOTH_OFF,
 
         /**
-         * An invalid parameter was passed to an OpenSpatial method
+         * An invalid parameter was passed to an OpenSpatial method.
          */
         INVALID_PARAMETER,
     }

@@ -17,15 +17,23 @@
 package net.openspatial;
 
 import android.bluetooth.BluetoothDevice;
-import net.openspatial.*;
+import android.util.Log;
 
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * Takes raw data from Bluetooth LE packets and decodes them in to OpenSpatialData.
+ */
 public class OpenSpatialEventFactory {
+
+    private static final String TAG = OpenSpatialEventFactory.class.getSimpleName();
+
     private static final short SCROLL_OPCODE            = 0x1;
     private static final short DIRECTIONS_OPCODE        = 0x2;
 
@@ -90,6 +98,7 @@ public class OpenSpatialEventFactory {
                 put(SCROLL_DOWN, GestureEvent.GestureEventType.SCROLL_DOWN);
             }};
 
+    @Deprecated
     public PointerEvent getPointerEventFromCharacteristic(BluetoothDevice device, byte[] value) {
         ByteBuffer buffer = ByteBuffer.wrap(value);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -104,6 +113,7 @@ public class OpenSpatialEventFactory {
         return new PointerEvent(device, PointerEvent.PointerEventType.RELATIVE, x, y);
     }
 
+    @Deprecated
     public List<ButtonEvent> getButtonEventsFromCharacteristic(BluetoothDevice device, byte[] bytes) {
         List<ButtonEvent> buttonEvents = new ArrayList<ButtonEvent>();
 
@@ -120,14 +130,17 @@ public class OpenSpatialEventFactory {
         return buttonEvents;
     }
 
+    @Deprecated
     private GestureEvent.GestureEventType getScrollGestureType(byte value) {
         return GESTURE_SCROLL_MAP.get(value);
     }
 
+    @Deprecated
     private GestureEvent.GestureEventType getDirectionGestureType(byte value) {
         return GESTURE_DIRECTION_MAP.get(value);
     }
 
+    @Deprecated
     public GestureEvent getGestureEventFromCharacteristic(BluetoothDevice device, byte[] bytes) {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -162,6 +175,7 @@ public class OpenSpatialEventFactory {
         return ((float)intVal) / (1 << 29);
     }
 
+    @Deprecated
     public Pose6DEvent getPose6DEventFromCharacteristic(BluetoothDevice device, byte[] value) {
         ByteBuffer buffer = ByteBuffer.wrap(value);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -183,11 +197,12 @@ public class OpenSpatialEventFactory {
                 getFloatFromInt16(codedYaw));
     }
 
+    @Deprecated
     public AnalogDataEvent getAnalogDataEventFromCharacteristic(BluetoothDevice device,
                                                                 byte[] value) {
         ByteBuffer buffer = ByteBuffer.wrap(value);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
-        
+
         short joystickX = buffer.getShort();
         short joystickY = buffer.getShort();
         short trigger = buffer.getShort();
@@ -203,6 +218,7 @@ public class OpenSpatialEventFactory {
         return (float)((value / 16.4) * Math.PI / 180);
     }
 
+    @Deprecated
     public Motion6DEvent getMotion6DEventFromCharacteristic(BluetoothDevice device, byte[] value) {
         ByteBuffer buffer = ByteBuffer.wrap(value);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -224,6 +240,7 @@ public class OpenSpatialEventFactory {
                 getGyroReadingFromInt16(gyroZ));
     }
 
+    @Deprecated
     public List<OpenSpatialEvent> getOpenSpatialEventsFromCharacteristic(
             BluetoothDevice device, OpenSpatialEvent.EventType eventType, byte[] value) {
         List<OpenSpatialEvent> result = new ArrayList<OpenSpatialEvent>();
@@ -252,5 +269,175 @@ public class OpenSpatialEventFactory {
         }
 
         return result;
+    }
+
+    private static final byte OPENSPATIAL_DATA_TERMINATOR = (byte) 0x9d;
+
+    /**
+     * Takes the data bytes from a Bluetooth LE packet and decodes OpenSpatial data.
+     * @param device The sender of the data to be processed
+     * @param data The bytes received from the OpenSpatial device
+     * @return A {@link List} of {@link OpenSpatialData} decoded from the packet.
+     */
+    public List<OpenSpatialData> decodeOpenSpatialDataPacket(
+            BluetoothDevice device, byte[] data) {
+
+        List<OpenSpatialData> result = new ArrayList<OpenSpatialData>();
+        ByteBuffer buffer = ByteBuffer.wrap(data);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+
+        byte dataType = buffer.get();
+        try {
+            do {
+                List<OpenSpatialData> events
+                        = decodeOpenSpatialData(device, dataType, buffer);
+
+                result.addAll(events);
+                dataType = buffer.get();
+            } while (dataType != OPENSPATIAL_DATA_TERMINATOR);
+        } catch (BufferUnderflowException e) {
+            Log.e(TAG, "Buffer underflow");
+        }
+
+        return result;
+    }
+
+    private List<OpenSpatialData> decodeOpenSpatialData(
+            BluetoothDevice device, byte dataType, ByteBuffer buffer) {
+        DataType type = DataType.valueOf(dataType);
+
+        List<OpenSpatialData> events = new ArrayList<OpenSpatialData>();
+        if (type == null) {
+            Log.d(TAG, "Got null dataType from raw byte " + dataType);
+            return events;
+        }
+
+        switch (type) {
+            case BUTTON:
+                events.addAll(decodeButtonData(device, buffer));
+                break;
+            case RAW_ACCELEROMETER:
+                events.add(decodeAccelData(device, buffer));
+                break;
+            case RAW_COMPASS:
+                events.add(decodeCompassData(device, buffer));
+                break;
+            case RAW_GYRO:
+                events.add(decodeGyroData(device, buffer));
+                break;
+            case EULER_ANGLES:
+                events.add(decodeEulerData(device, buffer));
+                break;
+            case TRANSLATIONS:
+                events.add(decodeTranslationData(device, buffer));
+                break;
+            case RELATIVE_XY:
+                events.add(decodeXYData(device, buffer));
+                break;
+            case GESTURE:
+                events.add(decodeGestureData(device, buffer));
+                break;
+            case SLIDER:
+                events.add(decodeSliderData(device, buffer));
+                break;
+            case ANALOG:
+                events.add(decodeAnalogData(device, buffer));
+                break;
+            default:
+                throw new UnsupportedOperationException(
+                        "Event Factory failed to decode unknown data type!");
+        }
+
+        return events;
+    }
+
+    private List<OpenSpatialData> decodeButtonData(
+            BluetoothDevice device, ByteBuffer buffer) {
+
+        final byte UP_DOWN_MASK = (byte) (1 << 7);
+
+        List<OpenSpatialData> result = new ArrayList<OpenSpatialData>();
+
+        byte data = buffer.get();
+        ButtonState state = (data & UP_DOWN_MASK) != 0 ? ButtonState.DOWN : ButtonState.UP;
+        int id = (data & ~UP_DOWN_MASK);
+
+        result.add(new ButtonData(device, id, state));
+
+        return result;
+    }
+
+    private AccelerometerData decodeAccelData(BluetoothDevice device, ByteBuffer buffer) {
+
+        float[] values = new float[3];
+        for(int i = 0; i < 3; i++) {
+            values[i] = getAccelReadingFromInt16(buffer.getShort());
+        }
+
+        return new AccelerometerData(device, values[0], values[1], values[2]);
+    }
+
+    private CompassData decodeCompassData(
+            BluetoothDevice device, ByteBuffer buffer) {
+        int[] values = new int[3];
+        for(int i = 0; i < 3; i++) {
+            values[i] = buffer.getShort();
+        }
+
+        return new CompassData(device, values[0], values[1], values[2]);
+    }
+
+    private GyroscopeData decodeGyroData(BluetoothDevice device, ByteBuffer buffer) {
+        float[] values = new float[3];
+        for(int i = 0; i < 3; i++) {
+            values[i] = getGyroReadingFromInt16(buffer.getShort());
+        }
+
+        return new GyroscopeData(device, values[0], values[1], values[2]);
+    }
+
+    private EulerData decodeEulerData(BluetoothDevice device, ByteBuffer buffer) {
+        float[] values = new float[3];
+        for(int i = 0; i < 3; i++) {
+            values[i] = getFloatFromInt16(buffer.getShort());
+        }
+
+        return new EulerData(device, values[0], values[1], values[2]);
+    }
+
+    private float getTranslationReadingFromShort(short value) {
+        return (float) (value / (1 << 6));
+    }
+
+    private TranslationData decodeTranslationData(BluetoothDevice device, ByteBuffer buffer) {
+        float[] values = new float[3];
+        for(int i = 0; i < 3; i++) {
+            values[i] = getTranslationReadingFromShort(buffer.getShort());
+        }
+
+        return new TranslationData(device, values[0], values[1], values[2]);
+    }
+
+    private RelativeXYData decodeXYData(BluetoothDevice device, ByteBuffer buffer) {
+        return new RelativeXYData(device, buffer.getShort(), buffer.getShort());
+    }
+
+    private GestureData decodeGestureData(BluetoothDevice device, ByteBuffer buffer) {
+        byte value = buffer.get();
+        return new GestureData(device, GestureType.valueOf(value));
+    }
+
+    private SliderData decodeSliderData(BluetoothDevice device, ByteBuffer buffer) {
+        byte value = buffer.get();
+        return new SliderData(device, SliderType.valueOf(value));
+    }
+
+    private AnalogData decodeAnalogData(BluetoothDevice device, ByteBuffer buffer) {
+        int[] values = new int[3];
+        for(int i = 0; i < 3; i++) {
+            values[i] = buffer.getShort();
+        }
+
+        return new AnalogData(device, values[0], values[1], values[2]);
     }
 }

@@ -27,17 +27,18 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Parcel;
 import android.util.Log;
 
 import java.util.*;
 
 /**
- * This service provides clients with OpenSpatialEvents that they are interested in. Clients bind with this service and
- * call one of the {@code register_*()} functions to register with the kind of events they are interested in and on which
- * device. Once an event is received from the specified device the service calls the
- * {@link net.openspatial.OpenSpatialEvent.EventListener#onEventReceived(OpenSpatialEvent)} of the listener specified in the
- * {@code register_*()} function.
+ * This service provides clients with OpenSpatialEvents that they are interested in. Clients bind
+ * with this service and call
+ * {@link #registerForData(BluetoothDevice, HashSet, OpenSpatialDataListener)}.
+ * Once data is received from the specified device the service calls the
+ * {@link net.openspatial.OpenSpatialDataListener#onDataReceived(OpenSpatialData)} of the listener
+ * specified in the {@link #registerForData(BluetoothDevice, HashSet, OpenSpatialDataListener)}
+ * function.
  */
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class OpenSpatialService extends Service {
@@ -59,6 +60,8 @@ public class OpenSpatialService extends Service {
             } else if (action.equals(
                     OpenSpatialConstants.OPENSPATIAL_DEVICE_INFO_INTENT_ACTION)) {
                 processDeviceInfoReceipt(intent);
+            } else if (action.equals(OpenSpatialConstants.OPENSPATIAL_DATA_INTENT_ACTION)) {
+                processInboundData(intent);
             } else {
                 processEventIntent(intent);
             }
@@ -68,48 +71,50 @@ public class OpenSpatialService extends Service {
     private final BroadcastReceiver mResultReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-        if (mServiceCallback == null) {
-            Log.e(TAG, "No callback interface registered");
-            return;
-        }
+            if (mServiceCallback == null && mServiceInterface == null) {
+                Log.e(TAG, "No callback interface registered");
+                return;
+            }
 
-        String action = intent.getAction();
-        if (action == null) {
-            Log.e(TAG, "Got null action");
-            return;
-        }
+            String action = intent.getAction();
+            if (action == null) {
+                Log.e(TAG, "Got null action");
+                return;
+            }
 
-        String identifier = intent.getStringExtra(OpenSpatialConstants.IDENTIFIER);
-        if (identifier == null || !identifier.equals(mIdentifier)) {
-            return;
-        }
+            String identifier = intent.getStringExtra(OpenSpatialConstants.IDENTIFIER);
+            if (identifier == null || !identifier.equals(mIdentifier)) {
+                return;
+            }
 
-        BluetoothDevice device = intent.getParcelableExtra(OpenSpatialConstants.BLUETOOTH_DEVICE);
-        if (device == null) {
-            Log.e(TAG, "Device not set in result");
-            return;
-        }
+            BluetoothDevice device =
+                    intent.getParcelableExtra(OpenSpatialConstants.BLUETOOTH_DEVICE);
+            if (device == null) {
+                Log.e(TAG, "Device not set in result");
+                return;
+            }
 
-        int status = intent.getIntExtra(OpenSpatialConstants.STATUS, -1);
-        if (status == -1) {
-            Log.e(TAG, "Status not set in result");
-            return;
-        }
+            int status = intent.getIntExtra(OpenSpatialConstants.STATUS, -1);
+            if (status == -1) {
+                Log.e(TAG, "Status not set in result");
+                return;
+            }
 
-        OpenSpatialEvent.EventType eventType =
-                (OpenSpatialEvent.EventType) intent.getSerializableExtra(
-                        OpenSpatialConstants.EVENT_TYPE);
-        if (eventType == null) {
-            Log.e(TAG, "Event type not set in result");
-            return;
-        }
+            OpenSpatialEvent.EventType eventType =
+                    (OpenSpatialEvent.EventType) intent.getSerializableExtra(
+                            OpenSpatialConstants.EVENT_TYPE);
 
-        if (action.equals(
-                OpenSpatialConstants.OPENSPATIAL_REGISTRATION_CHANGE_ATTEMPT_EVENT_RESULT)) {
-            mServiceCallback.eventRegistrationResult(device, eventType, status);
-        } else {
-            Log.e(TAG, "Got unknown action: " + action);
-        }
+            if (action.equals(
+                    OpenSpatialConstants.OPENSPATIAL_REGISTRATION_CHANGE_ATTEMPT_EVENT_RESULT)) {
+                if (mServiceCallback != null) {
+                    mServiceCallback.eventRegistrationResult(device, eventType, status);
+                }
+                if (mServiceInterface != null) {
+                    mServiceInterface.registrationResult(device, status);
+                }
+            } else {
+                Log.e(TAG, "Got unknown action: " + action);
+            }
         }
     };
 
@@ -121,8 +126,11 @@ public class OpenSpatialService extends Service {
     private String mIdentifier;
     private OpenSpatialServiceCallback mServiceCallback;
 
+    private OpenSpatialInterface mServiceInterface;
+
     private static final String TAG = OpenSpatialService.class.getSimpleName();
 
+    @Deprecated
     private void registerCallback(HashMap<BluetoothDevice, EventCallbacks> map,
                                   BluetoothDevice device,
                                   OpenSpatialEvent.EventType eventType,
@@ -143,6 +151,36 @@ public class OpenSpatialService extends Service {
         callbacks.setCallback(eventType, listener);
     }
 
+    private void registerCallback(HashMap<BluetoothDevice, EventCallbacks> map,
+                                  BluetoothDevice device,
+                                  OpenSpatialDataListener listener) throws OpenSpatialException {
+        EventCallbacks callbacks = map.get(device);
+
+        if (device != null && callbacks == null) {
+            callbacks = new EventCallbacks();
+            map.put(device, callbacks);
+        }
+
+        if (callbacks.getCallback() != null) {
+            throw new OpenSpatialException(OpenSpatialException.ErrorCode.DEVICE_ALREADY_REGISTERED,
+                    "Bluetooth device " + device.getName() + " (" + device.getAddress()
+                            + ") already registered");
+        }
+
+        callbacks.setCallback(listener);
+    }
+
+    private void sendIntent(BluetoothDevice device, String action,
+                            HashSet<DataType> types, boolean setRegistered) {
+        Intent intent = new Intent(action);
+        intent.putExtra(OpenSpatialConstants.BLUETOOTH_DEVICE, device);
+        intent.putExtra(OpenSpatialConstants.IDENTIFIER, mIdentifier);
+        intent.putExtra(OpenSpatialConstants.DATA_TYPES, types);
+        intent.putExtra(OpenSpatialConstants.SET_REGISTRATION_STATUS, setRegistered);
+
+        sendBroadcast(intent);
+    }
+
     private void sendIntent(BluetoothDevice device, String action) {
         Intent intent = new Intent(action);
         intent.putExtra(OpenSpatialConstants.BLUETOOTH_DEVICE, device);
@@ -160,6 +198,7 @@ public class OpenSpatialService extends Service {
         sendBroadcast(intent);
     }
 
+    @Deprecated
     private void sendIntent(BluetoothDevice device, String action,
                             OpenSpatialEvent.EventType eventType, String extendedEventCategory,
                             boolean setRegistered) {
@@ -176,6 +215,7 @@ public class OpenSpatialService extends Service {
     }
 
     // Must *ONLY* be called when map is synchronized
+    @Deprecated
     private void unRegisterCallback(HashMap<BluetoothDevice, EventCallbacks> map,
                                     BluetoothDevice device,
                                     OpenSpatialEvent.EventType eventType)
@@ -190,22 +230,58 @@ public class OpenSpatialService extends Service {
         callbacks.setCallback(eventType, null);
     }
 
+    private void unRegisterCallback(HashMap<BluetoothDevice,
+            EventCallbacks> map, BluetoothDevice device) throws OpenSpatialException {
+        EventCallbacks callbacks = map.get(device);
+        if (callbacks == null || callbacks.getCallback() == null) {
+            throw new OpenSpatialException(OpenSpatialException.ErrorCode.DEVICE_NOT_REGISTERED,
+                    "Bluetooth device " + device.getName() + " (" + device.getAddress() +
+                            ") is not registered");
+        }
+
+        callbacks.setCallback(null);
+    }
+
+    /**
+     * Initialize the library
+     *
+     * This call must be called before any other call is made.
+     *
+     * @param identifier A unique identifier identifying the entity using this library. This is typically
+     *                   an Activity or a Fragment. A typical value for this parameter is the fully qualified
+     *                   class name.
+     * @param cb         An instance of {@code OpenSpatialServiceCallback}. Any interesting events, such as
+     *                   new devices being connected, registration results etc. will be communicated via the
+     *                   respective methods in this class.
+     *
+     * @deprecated use {@link #initialize(String, OpenSpatialInterface)} instead.
+     */
+    @Deprecated
+    public void initialize(String identifier, OpenSpatialServiceCallback cb) {
+        mIdentifier = identifier;
+        mServiceCallback = cb;
+
+        setupFilters();
+    }
+
     /**
      * Initialize the library
      *
      * This call must be called before any other call is made
      *
-     * @param identifier A unique identifier identifying the entity using this library. This is typically
-     *                   an Activity or a Fragment. A typical value for this parameter is the fully qualified
-     *                   class name
-     * @param cb         An instance of {@code OpenSpatialServiceCallback}. Any interesting events, such as
-     *                   new devices being connected, registration results etc. will be communicated via the
-     *                   respective methods in this class.
+     * @param identifier A unique identifier identifying the entity using this library. This is
+     *                   typically an Activity or a Fragment. A typical value for this parameter
+     *                   is the fully qualified class name.
+     * @param openSpatialInterface The means by with the service will communicate with the client.
      */
-    public void initialize(String identifier, OpenSpatialServiceCallback cb) {
+    public void initialize(String identifier, OpenSpatialInterface openSpatialInterface) {
         mIdentifier = identifier;
-        mServiceCallback = cb;
+        mServiceInterface = openSpatialInterface;
 
+        setupFilters();
+    }
+
+    private void setupFilters() {
         // Register for registration event results
         IntentFilter filter = new IntentFilter();
         filter.addAction(OpenSpatialConstants.OPENSPATIAL_REGISTRATION_CHANGE_ATTEMPT_EVENT_RESULT);
@@ -219,21 +295,46 @@ public class OpenSpatialService extends Service {
         connectedDevicesfilter.addAction(
                 OpenSpatialConstants.OPENSPATIAL_EVENT_INTENT_ACTION);
         connectedDevicesfilter.addAction(
+                OpenSpatialConstants.OPENSPATIAL_DATA_INTENT_ACTION);
+        connectedDevicesfilter.addAction(
                 OpenSpatialConstants.OPENSPATIAL_DEVICE_INFO_INTENT_ACTION);
         registerReceiver(mEventReceiver, connectedDevicesfilter);
+    }
 
+    /**
+     * Register for {@link net.openspatial.OpenSpatialData} from the specified {@code device}.
+     * @param device The device to listen for {@code OpenSpatialData} from. This is an instance of
+     *               {@link BluetoothDevice}.
+     * @param dataTypes The Set of {@link net.openspatial.DataType}s you want to receive.
+     * @param listener An instance of {@link net.openspatial.OpenSpatialDataListener}. When an
+     *                 {@link OpenSpatialData} is received, the {@code onDataReceived} method is
+     *                 called.
+     * @throws OpenSpatialException Thrown when a device is already registered for data.
+     */
+    public void registerForData(BluetoothDevice device,
+                                  HashSet<DataType> dataTypes,
+                                  OpenSpatialDataListener listener) throws OpenSpatialException {
+        synchronized (mEventCallbacks) {
+            registerCallback(mEventCallbacks, device, listener);
+        }
+
+        sendIntent(device, OpenSpatialConstants.OPENSPATIAL_CHANGE_REGISTRATION_STATE_INTENT_ACTION,
+                dataTypes, true);
     }
 
     /**
      * Register for {@link net.openspatial.OpenSpatialEvent}s from the specified {@code device}
      * @param device The device to listen for {@code OpenSpatialEvent}s from. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
-     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     *               {@link BluetoothDevice}. Use null if you're using the emulator service.
      * @param eventType The OpenSpatial event type that you are interested in receiving
      * @param listener An instance of {@link net.openspatial.OpenSpatialEvent.EventListener}. When an
      *                 {@link net.openspatial.OpenSpatialEvent} is received, the {@code onEventReceived} method is
      *                 called
+     *
+     * @deprecated use {@link #registerForData(BluetoothDevice, HashSet, OpenSpatialDataListener)}
+     *             instead.
      */
+    @Deprecated
     public void registerForEvents(BluetoothDevice device, OpenSpatialEvent.EventType eventType,
                                         OpenSpatialEvent.EventListener listener)
             throws OpenSpatialException {
@@ -248,13 +349,15 @@ public class OpenSpatialService extends Service {
     /**
      * Register for {@link net.openspatial.OpenSpatialEvent}s from the specified {@code device}
      * @param device The device to listen for {@code OpenSpatialEvent}s from. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
-     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     *               {@link BluetoothDevice}. Use null if you're using the emulator service.
      * @param eventType The OpenSpatial event type that you are interested in receiving
      * @param listener An instance of {@link net.openspatial.OpenSpatialEvent.EventListener}. When an
      *                 {@link net.openspatial.OpenSpatialEvent} is received, the {@code onEventReceived} method is
      *                 called
+     * @deprecated use {@link #registerForData(BluetoothDevice, HashSet, OpenSpatialDataListener)}
+     *             instead.
      */
+    @Deprecated
     public void registerForEvents(BluetoothDevice device, OpenSpatialEvent.EventType eventType,
                                   String extendedEventCategory,
                                   OpenSpatialEvent.EventListener listener)
@@ -266,12 +369,15 @@ public class OpenSpatialService extends Service {
         sendIntent(device, OpenSpatialConstants.OPENSPATIAL_CHANGE_REGISTRATION_STATE_INTENT_ACTION,
                 eventType, extendedEventCategory, true);
     }
+
     /**
-     * Query information from the specified {@code device}
+     * Query information from the specified {@code device}.
      * @param device The device to request info for. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">}
-     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
-     * @param infoType The kind of device information you are interested in
+     *               {@link BluetoothDevice}.
+     * @param infoType The kind of device information you are interested in.
+     *
+     * @throws OpenSpatialException Thrown when {@code device} is not registered with the
+     *         {@code OpenSpatialService}.
      */
     public void queryDeviceInfo(BluetoothDevice device, String infoType)
             throws OpenSpatialException {
@@ -286,10 +392,11 @@ public class OpenSpatialService extends Service {
 
     /**
      * Unregister for {@link net.openspatial.OpenSpatialEvent}s from the specified {@code device}
-     * @param device The device to stop listening for {@code OpenSpatialEvent}s from. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
-     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     * @param device The device to stop listening for {@code OpenSpatialEvent}s from.
+     *               This is an instance of {@link BluetoothDevice}.
+     * @deprecated use {@link #unregisterForData(BluetoothDevice)} instead.
      */
+    @Deprecated
     public void unregisterForEvents(BluetoothDevice device, OpenSpatialEvent.EventType eventType)
             throws OpenSpatialException {
         sendIntent(device, OpenSpatialConstants.OPENSPATIAL_CHANGE_REGISTRATION_STATE_INTENT_ACTION,
@@ -301,11 +408,29 @@ public class OpenSpatialService extends Service {
     }
 
     /**
+     * Unregister for {@link OpenSpatialData}s from the specified {@code device}.
+     * @param device The device to stop listening for {@code OpenSpatialData} from.
+     *               This is an instance of {@link BluetoothDevice}.
+     * @throws OpenSpatialException Thrown when {@code device} is not registered.
+     */
+    public void unregisterForData(BluetoothDevice device)
+            throws OpenSpatialException {
+
+        sendIntent(device, OpenSpatialConstants.OPENSPATIAL_CHANGE_REGISTRATION_STATE_INTENT_ACTION,
+                null, false);
+
+        synchronized (mEventCallbacks) {
+            unRegisterCallback(mEventCallbacks, device);
+        }
+    }
+
+    /**
      * Unregister for {@link net.openspatial.OpenSpatialEvent}s from the specified {@code device}
      * @param device The device to stop listening for {@code OpenSpatialEvent}s from. This is an instance of
-     *               {@link <a href="http://developer.android.com/reference/android/bluetooth/BluetoothDevice.html">
-     *                   BluetoothDevice</a>}. Use null if you're using the emulator service.
+     *               {@link BluetoothDevice}.
+     * @deprecated use {@link #unregisterForData(BluetoothDevice)} instead.
      */
+    @Deprecated
     public void unregisterForEvents(BluetoothDevice device, OpenSpatialEvent.EventType eventType,
                                     String extendedEventCategory)
             throws OpenSpatialException {
@@ -347,12 +472,50 @@ public class OpenSpatialService extends Service {
         }
     }
 
+    void processInboundData(Intent i) {
+        OpenSpatialData event = i.getParcelableExtra(OpenSpatialConstants.OPENSPATIAL_EVENT);
+
+        if (event == null) {
+            Log.e(TAG, "Got null event!");
+            return;
+        }
+
+        BluetoothDevice device = event.device;
+
+        if (device == null) {
+            Log.e(TAG, "Got null device!");
+            return;
+        }
+
+        EventCallbacks callbacks = mEventCallbacks.get(device);
+
+        if (callbacks == null) {
+            Log.e(TAG, "No callbacks created for device!");
+            return;
+        }
+
+        OpenSpatialDataListener listener = callbacks.getCallback();
+
+        if (listener == null) {
+            Log.e(TAG, "No listener for OpenSpatialData found!");
+            return;
+        }
+
+        listener.onDataReceived(event);
+    }
+
     private void processDeviceInfoReceipt(Intent i) {
         BluetoothDevice device = i.getParcelableExtra(OpenSpatialConstants.BLUETOOTH_DEVICE);
         String infoType = i.getStringExtra(OpenSpatialConstants.INFO_TYPE);
         Bundle data = i.getExtras();
 
-        mServiceCallback.deviceInfoReceived(device, infoType, data);
+        if (mServiceCallback != null) {
+            mServiceCallback.deviceInfoReceived(device, infoType, data);
+        }
+
+        if (mServiceInterface != null) {
+            mServiceInterface.deviceInfoReceived(device, infoType, data);
+        }
     }
 
     private void processDeviceConnectionIntent(Intent intent) {
@@ -366,12 +529,26 @@ public class OpenSpatialService extends Service {
             if (!mEventCallbacks.containsKey(device)) {
                 mEventCallbacks.put(device, null);
             }
-            mServiceCallback.deviceConnected(device);
+
+            if (mServiceCallback != null) {
+                mServiceCallback.deviceConnected(device);
+            }
+
+            if (mServiceInterface != null) {
+                mServiceInterface.deviceConnected(device);
+            }
         } else if (intent.getAction().equals(OpenSpatialConstants.OPENSPATIAL_DEVICE_DISCONNECTED_INTENT_ACTION)) {
             if (!mEventCallbacks.containsKey(device)) {
                 mEventCallbacks.remove(device);
             }
-            mServiceCallback.deviceDisconnected(device);
+
+            if (mServiceCallback != null) {
+                mServiceCallback.deviceDisconnected(device);
+            }
+
+            if (mServiceInterface != null) {
+                mServiceInterface.deviceDisconnected(device);
+            }
         }
     }
 
@@ -382,9 +559,9 @@ public class OpenSpatialService extends Service {
     }
 
     /**
-     * Bind to the OpenSpatial service
-     * @param intent {@code Intent} specified when calling {@code bindService()}
-     * @return {@code Binder} for this service
+     * Bind to the OpenSpatial service.
+     * @param intent {@code Intent} specified when calling {@code bindService()}.
+     * @return {@code Binder} for this service.
      *
      * @see <a href="http://developer.android.com/reference/android/app/Service.html">Services</a>
      */
@@ -433,11 +610,43 @@ public class OpenSpatialService extends Service {
         cleanup();
     }
 
+    /**
+     * The callbacks used by the service to communicate with clients.
+     *
+     * @deprecated use {@link OpenSpatialInterface} instead.
+     */
+    @Deprecated
     public interface OpenSpatialServiceCallback {
-        public void deviceConnected(BluetoothDevice device);
-        public void deviceDisconnected(BluetoothDevice device);
-        public void eventRegistrationResult(BluetoothDevice device,
+        /**
+         * After {@link #getConnectedDevices()} is called this will trigger once per available
+         * OpenSpatial device.
+         * @param device An available OpenSpatial device.
+         */
+        void deviceConnected(BluetoothDevice device);
+        /**
+         * Triggers when an OpenSpatial device disconnects.
+         * @param device The OpenSpatial device that has disconnected.
+         */
+        void deviceDisconnected(BluetoothDevice device);
+
+        /**
+         * Reports the outcome of a registration attempt.
+         * @param device The device that registration was attempted on.
+         * @param eventType The event type that registration was attempted on.
+         * @param status The outcome of the attempt. Will be one of the values defined within
+         *               {@link OpenSpatialErrorCodes}.
+         */
+        void eventRegistrationResult(BluetoothDevice device,
                                             OpenSpatialEvent.EventType eventType, int status);
-        public void deviceInfoReceived(BluetoothDevice device, String infoType, Bundle infoData);
+
+        /**
+         * Reports the response returned from a call to
+         * {@link #queryDeviceInfo(BluetoothDevice, String)}.
+         *
+         * @param device The OpenSpatialDevice that was queried.
+         * @param infoType The type of inquiry.
+         * @param infoData The data returned.
+         */
+        void deviceInfoReceived(BluetoothDevice device, String infoType, Bundle infoData);
     }
 }

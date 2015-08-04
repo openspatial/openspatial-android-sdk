@@ -22,7 +22,9 @@ import android.os.Parcel;
 
 /**
  * This event contains analog data reported by joysticks or other actuators
+ * @deprecated use {@link AnalogData} instead.
  */
+@Deprecated
 public class AnalogDataEvent extends OpenSpatialEvent {
     /**
      * The joystick reading along the X axis
@@ -55,7 +57,7 @@ public class AnalogDataEvent extends OpenSpatialEvent {
         return super.toString() + ", JoystickX: " + this.joystickX + ", JoystickY: "
                 + this.joystickY + ", Trigger: " + this.trigger;
     }
-    
+
     // Methods to make this class Parcelable
     @Override
     public int describeContents() {
