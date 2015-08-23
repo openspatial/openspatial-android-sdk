@@ -17,15 +17,19 @@
 package net.openspatial;
 
 import android.bluetooth.BluetoothDevice;
+import android.os.Bundle;
 import android.util.Log;
 
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.ShortBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Takes raw data from Bluetooth LE packets and decodes them in to OpenSpatialData.
@@ -279,7 +283,7 @@ public class OpenSpatialEventFactory {
      * @param data The bytes received from the OpenSpatial device
      * @return A {@link List} of {@link OpenSpatialData} decoded from the packet.
      */
-    public List<OpenSpatialData> decodeOpenSpatialDataPacket(
+    protected List<OpenSpatialData> decodeOpenSpatialDataPacket(
             BluetoothDevice device, byte[] data) {
 
         List<OpenSpatialData> result = new ArrayList<OpenSpatialData>();
@@ -296,10 +300,262 @@ public class OpenSpatialEventFactory {
                 dataType = buffer.get();
             } while (dataType != OPENSPATIAL_DATA_TERMINATOR);
         } catch (BufferUnderflowException e) {
-            Log.e(TAG, "Buffer underflow");
+            Log.e(TAG, "Buffer underflow. Data payload: " + Arrays.toString(data));
         }
 
         return result;
+    }
+
+    protected void decodeOpenSpatialCommandResponse(BluetoothDevice device,
+                                                   byte[] data,
+                                                   OpenSpatialInterface iface) {
+
+        if (device == null || data == null) {
+            Log.e(TAG, "Malformed command response!");
+            return;
+        }
+
+        ByteBuffer buffer = ByteBuffer.wrap(data);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+
+        byte commandByte;
+        try {
+            commandByte = buffer.get();
+        } catch (BufferUnderflowException e) {
+            Log.e(TAG, "Response data received from " + device.getName() + " was malformed!");
+            return;
+        }
+
+        CommandType commandType = CommandType.valueOf(commandByte);
+
+        if (commandType == null) {
+            Log.e(TAG, "Received an unknown CommandType from " + device.getName() + "!");
+            return;
+        }
+
+        switch (commandType) {
+            case GET_PARAMETER:
+            case SET_PARAMETER:
+            case GET_PARAMETER_RANGE:
+                decodeGetSetParameterResponse(device, commandType, buffer, iface);
+                break;
+            case GET_IDENTIFIER:
+                decodeGetIdentifierResponse(device, buffer, iface);
+                break;
+            case ENABLE:
+            case DISABLE:
+                decodeEnableDisableResponse(device, commandType, buffer, iface);
+                break;
+            default:
+                Log.e(TAG, "No decoding for " + commandType.name() + " found!");
+                break;
+        }
+
+    }
+
+    private void decodeEnableDisableResponse(BluetoothDevice device,
+                                             CommandType commandType,
+                                             ByteBuffer buffer,
+                                             OpenSpatialInterface iface) {
+        DataType dataType = null;
+        try {
+            byte dataTypeByte = buffer.get();
+            dataType = DataType.valueOf(dataTypeByte);
+
+            if (dataType == null) {
+                Log.e(TAG, device.getName() + " reported an unknown data type of value: "
+                        + dataTypeByte);
+                return;
+            }
+        } catch (BufferUnderflowException e) {
+            Log.e(TAG, device.getName() + " reported a malformed response!");
+            return;
+        }
+
+        byte responseByte = -1;
+        ResponseCode responseCode = null;
+
+        try {
+            // Throw away this byte as it doesn't contain anything
+            buffer.get();
+
+            responseByte = buffer.get();
+
+            responseCode = ResponseCode.values()[responseByte];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            Log.e(TAG, device.getName() + " reported an invalid value: " + responseByte);
+            return;
+        } catch (BufferUnderflowException e) {
+            Log.e(TAG, device.getName() + " failed to report a response code!");
+            return;
+        }
+
+        switch (commandType) {
+            case ENABLE:
+                iface.onDataEnabledResponse(device, dataType, responseCode);
+                break;
+            case DISABLE:
+                iface.onDataDisabledResponse(device, dataType, responseCode);
+                break;
+            default:
+                Log.e(TAG, "Decoded an invalid response packet.");
+                break;
+        }
+    }
+
+    private DeviceParameter determineDeviceParameter(DataType dataType, byte parameterByte) {
+        Set<DeviceParameter> params = null;
+        switch (dataType) {
+            case GENERAL_DEVICE_INFORMATION:
+                params = DeviceParameter.generalDeviceParameters;
+                break;
+            default:
+                params = DeviceParameter.sensorParameters;
+        }
+
+        for (DeviceParameter param : params) {
+            if (param.getValue() == parameterByte) {
+                return param;
+            }
+        }
+        return null;
+    }
+
+    private void decodeGetIdentifierResponse(BluetoothDevice device,
+                                             ByteBuffer buffer,
+                                             OpenSpatialInterface iface) {
+        DataType dataType = null;
+        try {
+            byte dataTypeByte = buffer.get();
+            dataType = DataType.valueOf(dataTypeByte);
+
+            if (dataType == null) {
+                Log.e(TAG, "Identifier response received with an invalid DataType of value: "
+                        + dataTypeByte + " from device " + device.getName());
+            }
+        } catch (BufferUnderflowException e) {
+            Log.e(TAG, "Malformed identifier response received from " + device.getName());
+            return;
+        }
+
+        byte index;
+        try {
+            index = buffer.get();
+        } catch (BufferUnderflowException e) {
+            Log.e(TAG, "No identifier index reported by " + device.getName());
+            return;
+        }
+
+        ResponseCode responseCode = null;
+        byte responseCodeByte = -1;
+        try {
+            responseCodeByte = buffer.get();
+            responseCode = ResponseCode.values()[responseCodeByte];
+        } catch (BufferUnderflowException e) {
+            Log.e(TAG, "No identifier response code received from " + device.getName());
+            return;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            Log.e(TAG, device.getName() + " reported an unknown response code of value: "
+                    + responseCodeByte);
+            return;
+        }
+
+        byte[] bufferArray = buffer.array();
+
+        String identifier = new String(bufferArray, Charset.forName("UTF-8"));
+
+        iface.onGetIdentifierResponse(device, dataType, index, responseCode,identifier);
+    }
+
+    private void decodeGetSetParameterResponse(BluetoothDevice device,
+                                               CommandType commandType,
+                                            ByteBuffer buffer,
+                                            OpenSpatialInterface iface) {
+
+        DataType dataType;
+        try {
+            dataType = DataType.valueOf(buffer.get());
+        } catch (BufferUnderflowException e) {
+            Log.e(TAG, device.getName() + " gave a malformed response with no data type!");
+            return;
+        }
+
+        if (dataType == null) {
+            Log.e(TAG, "Null DataType reported by " + device.getName());
+            return;
+        }
+
+        byte parameterByte;
+        try {
+            parameterByte = buffer.get();
+        } catch (BufferUnderflowException e) {
+            Log.e(TAG, device.getName() + " responded with an unknown parameter!");
+            return;
+        }
+
+        DeviceParameter deviceParameter = determineDeviceParameter(dataType, parameterByte);
+
+        if (deviceParameter == null) {
+            Log.e(TAG, "Unable to identify parameter value " + parameterByte
+                    + " reported by " + device.getName());
+            return;
+        }
+
+        byte responseByte;
+        try {
+            responseByte = buffer.get();
+        } catch (BufferUnderflowException e) {
+            Log.e(TAG, device.getName() + " did not include a response code!");
+            return;
+        }
+
+        ResponseCode[] responseCodes = ResponseCode.values();
+        if (responseByte >= responseCodes.length) {
+            Log.e(TAG, device.getName() + " did not report a valid response code! " + responseByte);
+            return;
+        }
+
+        ResponseCode responseCode;
+        try {
+            responseCode = responseCodes[responseByte];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            Log.e(TAG, "Received an unknown response code!" + responseByte);
+            return;
+        }
+
+        short[] responseValues = new short[buffer.remaining()/2];
+
+        for (int i = 0; i < responseValues.length; i++) {
+            responseValues[i] = buffer.getShort();
+        }
+
+        switch (commandType) {
+            case GET_PARAMETER:
+                iface.onGetParameterResponse(device,
+                        dataType,
+                        deviceParameter,
+                        responseCode,
+                        responseValues);
+                break;
+            case SET_PARAMETER:
+                iface.onSetParameterResponse(device,
+                        dataType,
+                        deviceParameter,
+                        responseCode,
+                        responseValues);
+                break;
+            case GET_PARAMETER_RANGE:
+                iface.onGetParameterRangeResponse(device,
+                        dataType,
+                        deviceParameter,
+                        responseCode,
+                        responseValues[0],
+                        responseValues[1]);
+                break;
+            default:
+                Log.e(TAG, "Decoded wrong command type! " + commandType.name());
+                break;
+        }
     }
 
     private List<OpenSpatialData> decodeOpenSpatialData(
@@ -344,8 +600,7 @@ public class OpenSpatialEventFactory {
                 events.add(decodeAnalogData(device, buffer));
                 break;
             default:
-                throw new UnsupportedOperationException(
-                        "Event Factory failed to decode unknown data type!");
+                Log.e(TAG, "Unknown data type: " + type.ordinal());
         }
 
         return events;
@@ -374,7 +629,7 @@ public class OpenSpatialEventFactory {
             values[i] = getAccelReadingFromInt16(buffer.getShort());
         }
 
-        return new AccelerometerData(device, values[0], values[1], values[2]);
+        return new AccelerometerData(device, values);
     }
 
     private CompassData decodeCompassData(
@@ -384,7 +639,7 @@ public class OpenSpatialEventFactory {
             values[i] = buffer.getShort();
         }
 
-        return new CompassData(device, values[0], values[1], values[2]);
+        return new CompassData(device, values);
     }
 
     private GyroscopeData decodeGyroData(BluetoothDevice device, ByteBuffer buffer) {
@@ -393,7 +648,7 @@ public class OpenSpatialEventFactory {
             values[i] = getGyroReadingFromInt16(buffer.getShort());
         }
 
-        return new GyroscopeData(device, values[0], values[1], values[2]);
+        return new GyroscopeData(device, values);
     }
 
     private EulerData decodeEulerData(BluetoothDevice device, ByteBuffer buffer) {
@@ -402,7 +657,7 @@ public class OpenSpatialEventFactory {
             values[i] = getFloatFromInt16(buffer.getShort());
         }
 
-        return new EulerData(device, values[0], values[1], values[2]);
+        return new EulerData(device, values);
     }
 
     private float getTranslationReadingFromShort(short value) {
@@ -415,11 +670,16 @@ public class OpenSpatialEventFactory {
             values[i] = getTranslationReadingFromShort(buffer.getShort());
         }
 
-        return new TranslationData(device, values[0], values[1], values[2]);
+        return new TranslationData(device, values);
     }
 
     private RelativeXYData decodeXYData(BluetoothDevice device, ByteBuffer buffer) {
-        return new RelativeXYData(device, buffer.getShort(), buffer.getShort());
+        int[] values = new int[3];
+        for(int i = 0; i < 3; i++) {
+            values[i] = buffer.getShort();
+        }
+
+        return new RelativeXYData(device, values);
     }
 
     private GestureData decodeGestureData(BluetoothDevice device, ByteBuffer buffer) {
@@ -438,6 +698,6 @@ public class OpenSpatialEventFactory {
             values[i] = buffer.getShort();
         }
 
-        return new AnalogData(device, values[0], values[1], values[2]);
+        return new AnalogData(device, values);
     }
 }

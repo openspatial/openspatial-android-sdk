@@ -38,10 +38,11 @@ public class OpenSpatialConstants {
 
     public static final String BLUETOOTH_DEVICE = "net.openspatial.BLUETOOTH_DEVICE";
     public static final String OPENSPATIAL_EVENT = "net.openspatial.OPENSPATIAL_EVENT";
+    public static final String OPENSPATIAL_DATA = "net.openspatial.OPENSPATIAL_DATA";
     public static final String IDENTIFIER = "net.openspatial.IDENTIFIER";
     public static final String STATUS = "net.openspatial.STATUS";
     public static final String EVENT_TYPE = "net.openspatial.EVENT_TYPE";
-    public static final String DATA_TYPES = "net.openspatial.DATA_TYPES";
+    public static final String DATA_TYPE = "net.openspatial.DATA_TYPE";
     public static final String EVENT_UUID = "net.openspatial.EVENT_UUID";
     public static final String SET_REGISTRATION_STATUS = "net.openspatial.SET_REGISTRATION_STATUS";
     public static final String INFO_TYPE = "net.openspatial.INFO_TYPE";
@@ -50,6 +51,8 @@ public class OpenSpatialConstants {
     // Actions for intents sent by the service
     public static final String OPENSPATIAL_LIST_DEVICES_INTENT_ACTION =
             "net.openspatial.OPENSPATIAL_LIST_DEVICES_INTENT_ACTION";
+    public static final String OPENSPATIAL_SET_DATA_REGISTRATION_STATE_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_SET_REGISTRATION_STATE_INTENT_ACTION";
     public static final String OPENSPATIAL_CHANGE_REGISTRATION_STATE_INTENT_ACTION =
             "net.openspatial.OPENSPATIAL_CHANGE_REGISTRATION_STATE_INTENT_ACTION";
     public static final String OPENSPATIAL_QUERY_DEVICE_INFO_INTENT_ACTION =
@@ -58,9 +61,12 @@ public class OpenSpatialConstants {
     // Actions for events received by the service
     public static final String OPENSPATIAL_EVENT_INTENT_ACTION =
             "net.openspatial.OPENSPATIAL_EVENT_INTENT_ACTION";
-    // Actions for events received by the service
     public static final String OPENSPATIAL_DATA_INTENT_ACTION =
             "net.openspatial.OPENSPATIAL_DATA_INTENT_ACTION";
+    public static final String OPENSPATIAL_COMMAND_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_COMMAND_INTENT_ACTION";
+    public static final String OPENSPATIAL_RESPONSE_INTENT_ACTION =
+            "net.openspatial.OPENSPATIAL_RESPONSE_INTENT_ACTION";
     public static final String OPENSPATIAL_DEVICE_INFO_INTENT_ACTION =
             "net.openspatial.OPENSPATIAL_DEVICE_INFO_INTENT_ACTION";
     public static final String OPENSPATIAL_DEVICE_CONNECTED_INTENT_ACTION =

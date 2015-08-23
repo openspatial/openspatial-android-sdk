@@ -17,60 +17,33 @@
 package net.openspatial;
 
 import android.bluetooth.BluetoothDevice;
-import android.os.Parcel;
-import android.os.Parcelable;
 
 /**
  * Contains gesture information being detected by an OpenSpatial device.
  */
 public class GestureData extends OpenSpatialData {
 
+    private final GestureType gestureType;
+
     /**
-     * The type of gesture that is being reported
+     * @return The type of gesture that is being reported
      */
-    public GestureType gestureType;
+    public GestureType getGestureType() {
+        return gestureType;
+    }
 
     /**
      * Create a new {@code GestureData} of the specified type
      * @param device The {@link BluetoothDevice} reporting the gesture.
      * @param gestureType the type of gesture being reported.
      */
-    public GestureData(BluetoothDevice device, GestureType gestureType) {
+    protected GestureData(BluetoothDevice device, GestureType gestureType) {
         super(device, DataType.GESTURE);
         this.gestureType = gestureType;
     }
 
     @Override
     public String toString() {
-        return super.toString() +  ", Gesture Event: " + gestureType.name();
+        return super.toString() +  ", Gesture Data: " + getGestureType().name();
     }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel out, int flags) {
-        super.writeToParcel(out, flags);
-        out.writeSerializable(gestureType);
-    }
-
-    private GestureData(Parcel in) {
-        super(in);
-        this.gestureType = (GestureType) in.readSerializable();
-    }
-
-    public static final Parcelable.Creator<GestureData> CREATOR
-            = new Parcelable.Creator<GestureData>() {
-        @Override
-        public GestureData createFromParcel(Parcel in) {
-            return new GestureData(in);
-        }
-
-        @Override
-        public GestureData[] newArray(int size) {
-            return new GestureData[size];
-        }
-    };
 }

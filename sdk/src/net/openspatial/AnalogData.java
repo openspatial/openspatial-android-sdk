@@ -18,46 +18,36 @@ package net.openspatial;
 
 import android.bluetooth.BluetoothDevice;
 
+import java.util.Arrays;
+
 /**
  * Contains the offset values of any analog buttons or actuators an OpenSpatial device may have.
  */
 public class AnalogData extends OpenSpatialData {
-    /**
-     * The reading for analog0
-     */
-    public int analog0;
+
+    private final int[] analogData;
 
     /**
-     * The reading for analog1
+     * Provides the analog sensor reading reported by a sensor with a given index.
+     * @param index The analog sensor whose value the caller is interested in.
+     * @return The last reported analog sensor value.
      */
-    public int analog1;
-
-    /**
-     * The reading for analog2
-     */
-    public int analog2;
+    public int getAnalogValue(int index) {
+        return analogData[index];
+    }
 
     /**
      * Create a new {@code AnalogData} of the specified type
      * @param device {@link BluetoothDevice} that sent this data
-     * @param analog0 Value reported by analog0
-     * @param analog1 Value reported by analog1
-     * @param analog2 Value reported by analog2
+     * @param analogData The data reported by the device's analog sensors.
      */
-    public AnalogData(BluetoothDevice device, int analog0, int analog1, int analog2) {
+    protected AnalogData(BluetoothDevice device, int[] analogData) {
         super(device, DataType.ANALOG);
-        this.analog0 = analog0;
-        this.analog1 = analog1;
-        this.analog2 = analog2;
+        this.analogData = analogData;
     }
 
     @Override
     public String toString() {
-        return super.toString() + ", Analog Event: ["
-                + this.analog0 + ", " + this.analog1 + ", " + this.analog2 + "]";
-    }
-    @Override
-    public int describeContents() {
-        return 0;
+        return super.toString() + ", Analog Data: " + Arrays.toString(analogData);
     }
 }

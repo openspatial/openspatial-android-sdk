@@ -117,7 +117,7 @@ abstract public class OpenSpatialEvent implements Parcelable {
     /**
      * A listener interface for clients interested in {@link net.openspatial.OpenSpatialEvent}s
      *
-     * @deprecated use {@link OpenSpatialDataListener} instead.
+     * @deprecated use {@link OpenSpatialInterface} instead.
      */
     @Deprecated
     public interface EventListener {

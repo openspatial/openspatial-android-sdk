@@ -20,76 +20,49 @@ import android.bluetooth.BluetoothDevice;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.Arrays;
+
 /**
  * Contains raw accelerometer in units of G.
  */
 public class AccelerometerData extends OpenSpatialData {
 
-    /**
-     * Accelerometer reading about x axis.
-     */
-    public float x;
+    private final float[] accelData;
 
     /**
-     * Accelerometer reading about x axis.
+     * @return Accelerometer reading about x axis.
      */
-    public float y;
+    public float getX() {
+        return accelData[X];
+    }
 
     /**
-     * Accelerometer reading about x axis.
+     * @return Accelerometer reading about y axis.
      */
-    public float z;
+    public float getY() {
+        return accelData[Y];
+    }
+
+    /**
+     * @return Accelerometer reading about z axis.
+     */
+    public float getZ() {
+        return accelData[Z];
+    }
 
     /**
      * Create a new {@code AccelerometerData} of the specified type
      * @param device {@link BluetoothDevice} that sent this data
-     * @param x accel reading in the x direction (in G's)
-     * @param y accel reading in the y direction (in G's)
-     * @param z accel reading in the z direction (in G's)
+     * @param accelData Reported accelerometer values.
      */
-    public AccelerometerData(BluetoothDevice device, float x, float y, float z) {
+    protected AccelerometerData(BluetoothDevice device, float[] accelData) {
         super(device, DataType.RAW_ACCELEROMETER);
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.accelData = accelData;
     }
 
     @Override
     public String toString() {
         return super.toString() +
-                ", Accelerometer Event: [ " + this.x + ", " + this.y + ", " + this.z + " ]";
+                ", Accelerometer Data: " + Arrays.toString(accelData);
     }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel out, int flags) {
-        super.writeToParcel(out, flags);
-        out.writeFloat(x);
-        out.writeFloat(y);
-        out.writeFloat(z);
-    }
-
-    private AccelerometerData(Parcel in) {
-        super(in);
-        this.x = in.readFloat();
-        this.y = in.readFloat();
-        this.z = in.readFloat();
-    }
-
-    public static final Parcelable.Creator<AccelerometerData> CREATOR
-            = new Parcelable.Creator<AccelerometerData>() {
-        @Override
-        public AccelerometerData createFromParcel(Parcel in) {
-            return new AccelerometerData(in);
-        }
-
-        @Override
-        public AccelerometerData[] newArray(int size) {
-            return new AccelerometerData[size];
-        }
-    };
 }

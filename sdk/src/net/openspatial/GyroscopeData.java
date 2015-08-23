@@ -17,8 +17,8 @@
 package net.openspatial;
 
 import android.bluetooth.BluetoothDevice;
-import android.os.Parcel;
-import android.os.Parcelable;
+
+import java.util.Arrays;
 
 /**
  * Contains the raw, unprocessed readings from the gyroscope of an OpenSpatial device in
@@ -26,71 +26,45 @@ import android.os.Parcelable;
  */
 public class GyroscopeData extends OpenSpatialData {
 
-    /**
-     * A Gyroscope reading in the x axis
-     */
-    public float x;
+    private final float[] gyroData;
 
     /**
-     * A Gyroscope reading in the y axis
+     * A Gyroscope reading in the x axis.
+     * @return Gyroscopic sensor reading about the x axis.
      */
-    public float y;
+    public float getX() {
+        return gyroData[X];
+    }
+
+    /**
+     * A Gyroscope reading in the y axis.
+     * @return Gyroscopic sensor reading about the y axis.
+     */
+    public float getY() {
+        return gyroData[Y];
+    }
 
     /**
      * A Gyroscope reading in the z axis
+     * @return Gyroscopic sensor reading about the x axis.
      */
-    public float z;
+    public float getZ() {
+        return gyroData[Z];
+    }
 
     /**
      * Create a new {@code GyroscopeData} of the specified type
      * @param device The device reporting the gyroscopic data.
-     * @param x The raw gyroscope reading about the x axis.
-     * @param y The raw gyroscope reading about the y axis.
-     * @param z The raw gyroscope reading about the z axis.
+     * @param gyroData The reported Gyroscopic data.
      */
-    public GyroscopeData(BluetoothDevice device, float x, float y, float z) {
+    protected GyroscopeData(BluetoothDevice device, float[] gyroData) {
         super(device, DataType.RAW_GYRO);
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.gyroData = gyroData;
     }
 
     @Override
     public String toString() {
         return super.toString() +
-                ", Gyroscope Event: [ " + this.x + ", " + this.y + ", " + this.z + " ]";
+                ", Gyroscope Data: " + Arrays.toString(gyroData);
     }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel out, int flags) {
-        super.writeToParcel(out, flags);
-        out.writeFloat(x);
-        out.writeFloat(y);
-        out.writeFloat(z);
-    }
-
-    private GyroscopeData(Parcel in) {
-        super(in);
-        this.x = in.readFloat();
-        this.y = in.readFloat();
-        this.z = in.readFloat();
-    }
-
-    public static final Parcelable.Creator<GyroscopeData> CREATOR
-            = new Parcelable.Creator<GyroscopeData>() {
-        @Override
-        public GyroscopeData createFromParcel(Parcel in) {
-            return new GyroscopeData(in);
-        }
-
-        @Override
-        public GyroscopeData[] newArray(int size) {
-            return new GyroscopeData[size];
-        }
-    };
 }

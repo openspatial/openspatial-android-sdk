@@ -19,68 +19,44 @@ import android.bluetooth.BluetoothDevice;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.Arrays;
+
 /**
  * A {@code RelativeXYEvent} provides a consumer with planar deltas about the the x and y
  * axis. It is similar in nature to the output of pointing devices such as computer mice or
  * trackpads.
  */
 public class RelativeXYData extends OpenSpatialData {
-    /**
-     * A relative translation in the x axis
-     */
-    public int x;
+
+    private final int[] relativeXY;
 
     /**
-     * A relative translation in the y axis
+     * @return The relative translation in the x axis
      */
-    public int y;
+    public int getX() {
+        return relativeXY[X];
+    }
+
+    /**
+     * @return the relative translation in the y axis
+     */
+    public int getY() {
+        return relativeXY[Y];
+    }
 
     /**
      * Create a new {@code RelativeXYData}
      * @param device The device that emitted the relative x and y values
-     * @param x The rotation about the x axis
-     * @param y The rotation about the y axis
+     * @param relativeXY The reported planer offsets
      */
-    public RelativeXYData(BluetoothDevice device, int x, int y) {
+    protected RelativeXYData(BluetoothDevice device, int[] relativeXY) {
         super(device, DataType.RELATIVE_XY);
-        this.x = x;
-        this.y = y;
+        this.relativeXY = relativeXY;
     }
 
     @Override
     public String toString() {
         return super.toString() +
-                ", RelativeXY Event: [ " + this.x + ", " + this.y + " ]";
+                ", RelativeXY Data: " + Arrays.toString(relativeXY);
     }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel out, int flags) {
-        super.writeToParcel(out, flags);
-        out.writeInt(x);
-        out.writeInt(y);
-    }
-
-    private RelativeXYData(Parcel in) {
-        super(in);
-        this.x = in.readInt();
-        this.y = in.readInt();
-    }
-
-    public static final Parcelable.Creator<RelativeXYData> CREATOR
-            = new Parcelable.Creator<RelativeXYData>() {
-        @Override
-        public RelativeXYData createFromParcel(Parcel in) {
-            return new RelativeXYData(in);
-        }
-
-        @Override
-        public RelativeXYData[] newArray(int size) {
-            return new RelativeXYData[size];
-        }
-    };
 }

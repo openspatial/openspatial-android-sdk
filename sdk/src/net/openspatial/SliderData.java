@@ -17,59 +17,33 @@
 package net.openspatial;
 
 import android.bluetooth.BluetoothDevice;
-import android.os.Parcel;
-import android.os.Parcelable;
 
 /**
  * Reports a slider action.
  */
 public class SliderData extends OpenSpatialData {
+
+    private final SliderType sliderType;
+
     /**
-     * The type of slider event that is being reported
+     * @return The type of slider event that is being reported
      */
-    public SliderType sliderType;
+    public SliderType getSliderType() {
+        return sliderType;
+    }
 
     /**
      * Create a new {@code SliderData} object
      * @param device The {@link BluetoothDevice} reporting the slider data.
      * @param sliderType The {@link SliderType} reported.
      */
-    public SliderData(BluetoothDevice device, SliderType sliderType) {
+    protected SliderData(BluetoothDevice device, SliderType sliderType) {
         super(device, DataType.SLIDER);
         this.sliderType = sliderType;
     }
 
     @Override
     public String toString() {
-        return super.toString() +  ", RelativeXY Event: " + sliderType.name();
+        return super.toString() +  ", Slider: " + getSliderType().name();
     }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel out, int flags) {
-        super.writeToParcel(out, flags);
-        out.writeSerializable(sliderType);
-    }
-
-    private SliderData(Parcel in) {
-        super(in);
-        this.sliderType = (SliderType) in.readSerializable();
-    }
-
-    public static final Parcelable.Creator<SliderData> CREATOR
-            = new Parcelable.Creator<SliderData>() {
-        @Override
-        public SliderData createFromParcel(Parcel in) {
-            return new SliderData(in);
-        }
-
-        @Override
-        public SliderData[] newArray(int size) {
-            return new SliderData[size];
-        }
-    };
 }

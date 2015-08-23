@@ -17,80 +17,52 @@
 package net.openspatial;
 
 import android.bluetooth.BluetoothDevice;
-import android.os.Parcel;
-import android.os.Parcelable;
+
+import java.util.Arrays;
 
 /**
  * Contains the rotation of the Openspatial device in 3D space. The rotation axis used is x-y-z. The
  * coordinate orientation is right handed with z facing up. All angles are in radians.
  */
 public class EulerData extends OpenSpatialData {
-    /**
-     * Roll value in radians
-     */
-    public float roll;
+
+    private final float[] eulerData;
 
     /**
-     * Pitch value in radians
+     * @return Roll value in radians
      */
-    public float pitch;
+    public float getRoll() {
+        return eulerData[X];
+    }
 
     /**
-     * Yaw value in radians
+     * @return Pitch value in radians
      */
-    public float yaw;
+    public float getPitch() {
+        return eulerData[Y];
+    }
+
+    /**
+     * @return Yaw value in radians
+     */
+    public float getYaw() {
+        return eulerData[Z];
+    }
 
     /**
      * Create a new {@code EulerData} object
      *
      * @param device The device that emitted the Euler values.
-     * @param roll The rotation about the x axis
-     * @param pitch The rotation about the y axis
-     * @param yaw The rotation about the z axis
+     * @param eulerData The reported 3-axis rotation.
      */
-    public EulerData(BluetoothDevice device, float roll, float pitch, float yaw) {
+    protected EulerData(BluetoothDevice device, float[] eulerData) {
         super(device, DataType.EULER_ANGLES);
-        this.roll = roll;
-        this.pitch = pitch;
-        this.yaw = yaw;
+        this.eulerData = eulerData;
     }
 
     @Override
     public String toString() {
         return super.toString() +
-                ", Gyroscope Event: [ " + this.roll + ", " + this.pitch + ", " + this.yaw + " ]";
+                ", Euler Data: " + Arrays.toString(eulerData);
     }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel out, int flags) {
-        super.writeToParcel(out, flags);
-        out.writeFloat(roll);
-        out.writeFloat(pitch);
-        out.writeFloat(yaw);
-    }
-
-    private EulerData(Parcel in) {
-        super(in);
-        this.roll = in.readFloat();
-        this.pitch = in.readFloat();
-        this.yaw = in.readFloat();
-    }
-
-    public static final Parcelable.Creator<EulerData> CREATOR
-            = new Parcelable.Creator<EulerData>() {
-        @Override
-        public EulerData createFromParcel(Parcel in) {
-            return new EulerData(in);
-        }
-
-        @Override
-        public EulerData[] newArray(int size) {
-            return new EulerData[size];
-        }
-    };
 }

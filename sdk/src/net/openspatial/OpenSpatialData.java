@@ -23,45 +23,39 @@ import android.os.Parcelable;
 /**
  * The base class for all data delivered over the {@link net.openspatial.OpenSpatialService}.
  */
-abstract public class OpenSpatialData implements Parcelable {
+abstract public class OpenSpatialData {
+
+    protected static final int X = 0;
+    protected static final int Y = 1;
+    protected static final int Z = 2;
 
     /**
      * The type of OpenSpatial contained within.
      */
-    public DataType dataType;
+    public final DataType dataType;
 
     /**
      * The time value returned by {@code System.currentTimeMillis()} at object creation.
      */
-    public long timestamp;
+    public final long timestamp;
 
     /**
      * The OpenSpatial device that reported the data.
      */
-    public BluetoothDevice device;
+    public final BluetoothDevice device;
 
     /**
      * Create an {@code OpenSpatialEvent} with a given type.
      * @param device The source of the data being reported.
      * @param type The type of the data.
      */
-    public OpenSpatialData(BluetoothDevice device, DataType type) {
+    protected OpenSpatialData(BluetoothDevice device, DataType type) {
+        if (device == null) {
+            throw new IllegalArgumentException("Null device!");
+        }
         this.device = device;
         this.dataType = type;
         timestamp = System.currentTimeMillis();
-    }
-
-    // Methods to make the class Parcelable
-    public void writeToParcel(Parcel out, int flags) {
-        out.writeSerializable(dataType);
-        out.writeLong(timestamp);
-        out.writeParcelable(device, flags);
-    }
-
-    protected OpenSpatialData(Parcel in) {
-        this.dataType = (DataType)in.readSerializable();
-        this.timestamp = in.readLong();
-        this.device = (BluetoothDevice)in.readParcelable(BluetoothDevice.class.getClassLoader());
     }
 
     @Override

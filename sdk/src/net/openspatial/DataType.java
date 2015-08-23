@@ -32,7 +32,8 @@ public enum DataType {
     RELATIVE_XY(0x10),
     GESTURE(0xa0),
     SLIDER(0xa1),
-    BUTTON(0xa2);
+    BUTTON(0xa2),
+    GENERAL_DEVICE_INFORMATION(0xff);
 
     private final byte id;
     DataType(int id) { this.id = (byte) id; }

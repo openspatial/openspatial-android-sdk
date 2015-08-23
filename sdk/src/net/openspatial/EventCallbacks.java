@@ -19,7 +19,9 @@ package net.openspatial;
 /**
  * Contains the set of callbacks registered to a given device and
  * provides the methods required to access or set them.
+ * @deprecated No longer needed.
  */
+@Deprecated
 class EventCallbacks {
 
     OpenSpatialEvent.EventListener mPointerEventCallback = null;
@@ -29,7 +31,6 @@ class EventCallbacks {
     OpenSpatialEvent.EventListener mGestureEventCallback = null;
     OpenSpatialEvent.EventListener mAnalogDataEventCallback = null;
     OpenSpatialEvent.EventListener mExtendedEventCallback = null;
-    OpenSpatialDataListener mOpenSpatialDataListener = null;
 
     /**
      * Get the registered callback that corresponds to the event type supplied as an argument
@@ -64,24 +65,6 @@ class EventCallbacks {
     }
 
     /**
-     * Get the callback that triggers upon receipt of an {@code OpenSpatialData}
-     *
-     * @return The callback registered by the client
-     */
-    protected OpenSpatialDataListener getCallback() {
-        return mOpenSpatialDataListener;
-    }
-
-    /**
-     * Get the registered callback that corresponds to the event type supplied as an argument.
-     *
-     * @param listener The listener that will report the receipt of data from an OpenSpatial device.
-     */
-    protected void setCallback(OpenSpatialDataListener listener) {
-        mOpenSpatialDataListener = listener;
-    }
-
-    /**
      * Get the registered callback that corresponds to the event type supplied as an argument
      *
      * @param eventType  The type of {@code OpenSpatialEvent} that the returned callback will be
@@ -89,7 +72,7 @@ class EventCallbacks {
      * @param callback The callback to be set.
      * @throws OpenSpatialException If eventType is null;
      *
-     * @deprecated use {@link #setCallback(OpenSpatialDataListener)} instead.
+     * @deprecated
      */
     @Deprecated
     public void setCallback(OpenSpatialEvent.EventType eventType,

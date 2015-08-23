@@ -20,77 +20,50 @@ import android.bluetooth.BluetoothDevice;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.Arrays;
+
 /**
  * Contains the raw, unprocessed readings from the compass/magnetometer of an OpenSpatial
  * device in units of uT.
  */
 public class CompassData extends OpenSpatialData {
 
-    /**
-     * A compass reading in the x axis (in uT)
-     */
-    public int x;
+    private final int[] compassData;
 
     /**
-     * A compass reading in the y axis (in uT)
+     * @return A compass reading in the x axis (in uT)
      */
-    public int y;
+    public int getX() {
+        return compassData[X];
+    }
 
     /**
-     * A compass reading in the z axis (in uT)
+     * @return A compass reading in the y axis (in uT)
      */
-    public int z;
+    public int getY() {
+        return compassData[Y];
+    }
+
+    /**
+     * @return A compass reading in the z axis (in uT)
+     */
+    public int getZ() {
+        return compassData[Z];
+    }
 
     /**
      * Create a new {@code CompassData} of the specified type
      * @param device {@link BluetoothDevice} that sent this data
-     * @param x compass reading in the x axis
-     * @param y compass reading in the y axis
-     * @param z compass reading in the z axis
+     * @param compassData Reported compass values
      */
-    public CompassData(BluetoothDevice device, int x, int y, int z) {
+    protected CompassData(BluetoothDevice device, int[] compassData) {
         super(device, DataType.RAW_COMPASS);
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.compassData = compassData;
     }
 
     @Override
     public String toString() {
         return super.toString() +
-                ", Compass Event: [ " + this.x + ", " + this.y + ", " + this.z + " ]";
+                ", Compass Event: " + Arrays.toString(compassData);
     }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel out, int flags) {
-        super.writeToParcel(out, flags);
-        out.writeInt(x);
-        out.writeInt(y);
-        out.writeInt(z);
-    }
-
-    private CompassData(Parcel in) {
-        super(in);
-        this.x = in.readInt();
-        this.y = in.readInt();
-        this.z = in.readInt();
-    }
-
-    public static final Parcelable.Creator<CompassData> CREATOR
-            = new Parcelable.Creator<CompassData>() {
-        @Override
-        public CompassData createFromParcel(Parcel in) {
-            return new CompassData(in);
-        }
-
-        @Override
-        public CompassData[] newArray(int size) {
-            return new CompassData[size];
-        }
-    };
 }

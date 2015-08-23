@@ -17,23 +17,29 @@
 package net.openspatial;
 
 import android.bluetooth.BluetoothDevice;
-import android.os.Parcel;
-import android.os.Parcelable;
 
 /**
  * Contains a report of a button entering a new state.
  */
 public class ButtonData extends OpenSpatialData {
 
-    /**
-     * Button ID
-     */
-    public int buttonId;
+    private final int buttonId;
+
+    private final ButtonState buttonState;
 
     /**
-     * The {@link ButtonState} the button has entered
+     * @return Button ID
      */
-    public ButtonState buttonState;
+    public int getButtonId() {
+        return buttonId;
+    }
+
+    /**
+     * @return The {@link ButtonState} the button has entered
+     */
+    public ButtonState getButtonState() {
+        return buttonState;
+    }
 
     /**
      * Create a new {@code ButtonData} of the specified type
@@ -41,7 +47,7 @@ public class ButtonData extends OpenSpatialData {
      * @param buttonId Identifier of a specific button on a device
      * @param buttonState Type of the {@code ButtonData}
      */
-    public ButtonData(BluetoothDevice device, int buttonId, ButtonState buttonState) {
+    protected ButtonData(BluetoothDevice device, int buttonId, ButtonState buttonState) {
         super(device, DataType.BUTTON);
         this.buttonId = buttonId;
         this.buttonState = buttonState;
@@ -49,38 +55,6 @@ public class ButtonData extends OpenSpatialData {
 
     @Override
     public String toString() {
-        return super.toString() + ", Button Event: Button " + buttonId + " " + buttonState.name();
+        return super.toString() + ", Button " + getButtonId() + " " + getButtonState().name();
     }
-
-    // Methods for making the class Parcelable
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel out, int flags) {
-        super.writeToParcel(out, flags);
-        out.writeInt(buttonId);
-        out.writeSerializable(buttonState);
-    }
-
-    private ButtonData(Parcel in) {
-        super(in);
-        this.buttonId = in.readInt();
-        this.buttonState = (ButtonState) in.readSerializable();
-    }
-
-    public static final Parcelable.Creator<ButtonData> CREATOR
-            = new Parcelable.Creator<ButtonData>() {
-        @Override
-        public ButtonData createFromParcel(Parcel in) {
-            return new ButtonData(in);
-        }
-
-        @Override
-        public ButtonData[] newArray(int size) {
-            return new ButtonData[size];
-        }
-    };
 }

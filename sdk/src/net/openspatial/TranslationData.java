@@ -17,79 +17,51 @@
 package net.openspatial;
 
 import android.bluetooth.BluetoothDevice;
-import android.os.Parcel;
-import android.os.Parcelable;
+
+import java.util.Arrays;
 
 /**
  * Contains the delta translation reported by an OpenSpatial device.
  */
 public class TranslationData extends OpenSpatialData {
-    /**
-     * A Translation reading in the x axis
-     */
-    public float x;
+
+    private final float[] translationData;
 
     /**
-     * A Translation reading in the y axis
+     * @return A Translation reading in the x axis
      */
-    public float y;
+    public float getX() {
+        return translationData[X];
+    }
 
     /**
-     * A Translation reading in the z axis
+     * @return A Translation reading in the y axis
      */
-    public float z;
+    public float getY() {
+        return translationData[Y];
+    }
+
+    /**
+     * @return A Translation reading in the z axis
+     */
+    public float getZ() {
+        return translationData[Z];
+    }
 
     /**
      * Create a new {@code TranslationData} object
      *
      * @param device The {@link BluetoothDevice} reporting the translation data.
-     * @param x The reported translation in the x direction.
-     * @param y The reported translation in the y direction.
-     * @param z The reported translation in the z direction.
+     * @param translationData The translation data reprted by the device.
      */
-    public TranslationData(BluetoothDevice device, float x, float y, float z) {
+    protected TranslationData(BluetoothDevice device, float[] translationData) {
         super(device, DataType.TRANSLATIONS);
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.translationData = translationData;
     }
 
     @Override
     public String toString() {
         return super.toString() +
-                ", Translation Event: [ " + this.x + ", " + this.y + ", " + this.z + " ]";
+                ", Translation Data: " + Arrays.toString(translationData);
     }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel out, int flags) {
-        super.writeToParcel(out, flags);
-        out.writeFloat(x);
-        out.writeFloat(y);
-        out.writeFloat(z);
-    }
-
-    private TranslationData(Parcel in) {
-        super(in);
-        this.x = in.readFloat();
-        this.y = in.readFloat();
-        this.z = in.readFloat();
-    }
-
-    public static final Parcelable.Creator<TranslationData> CREATOR
-            = new Parcelable.Creator<TranslationData>() {
-        @Override
-        public TranslationData createFromParcel(Parcel in) {
-            return new TranslationData(in);
-        }
-
-        @Override
-        public TranslationData[] newArray(int size) {
-            return new TranslationData[size];
-        }
-    };
 }
