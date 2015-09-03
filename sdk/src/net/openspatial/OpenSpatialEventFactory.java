@@ -614,7 +614,7 @@ public class OpenSpatialEventFactory {
         List<OpenSpatialData> result = new ArrayList<OpenSpatialData>();
 
         byte data = buffer.get();
-        ButtonState state = (data & UP_DOWN_MASK) != 0 ? ButtonState.DOWN : ButtonState.UP;
+        ButtonState state = (data & UP_DOWN_MASK) != 0 ? ButtonState.UP : ButtonState.DOWN;
         int id = (data & ~UP_DOWN_MASK);
 
         result.add(new ButtonData(device, id, state));
