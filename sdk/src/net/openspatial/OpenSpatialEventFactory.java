@@ -275,8 +275,6 @@ public class OpenSpatialEventFactory {
         return result;
     }
 
-    private static final byte OPENSPATIAL_DATA_TERMINATOR = (byte) 0x9d;
-
     /**
      * Takes the data bytes from a Bluetooth LE packet and decodes OpenSpatial data.
      * @param device The sender of the data to be processed
@@ -298,7 +296,7 @@ public class OpenSpatialEventFactory {
 
                 result.addAll(events);
                 dataType = buffer.get();
-            } while (dataType != OPENSPATIAL_DATA_TERMINATOR);
+            } while (buffer.hasRemaining());
         } catch (BufferUnderflowException e) {
             Log.e(TAG, "Buffer underflow. Data payload: " + Arrays.toString(data));
         }
@@ -558,13 +556,24 @@ public class OpenSpatialEventFactory {
         }
     }
 
+    private static final byte BOUNDARY_TAG = (byte) 0x9d;
     private List<OpenSpatialData> decodeOpenSpatialData(
             BluetoothDevice device, byte dataType, ByteBuffer buffer) {
-        DataType type = DataType.valueOf(dataType);
 
         List<OpenSpatialData> events = new ArrayList<OpenSpatialData>();
+
+        if (dataType == BOUNDARY_TAG) {
+            Log.d(TAG, "End of related data group.");
+            return events;
+        }
+
+        if (dataType == 0) {
+            return events;
+        }
+
+        DataType type = DataType.valueOf(dataType);
         if (type == null) {
-            Log.d(TAG, "Got null dataType from raw byte " + dataType);
+            Log.d(TAG, "Got unknown DataType from raw byte " + dataType);
             return events;
         }
 
