@@ -539,6 +539,15 @@ public class OpenSpatialService extends Service {
 
         List<OpenSpatialData> dataList = mEventFactory.decodeOpenSpatialDataPacket(device, data);
 
+        if (mServiceInterface == null) {
+            /* At this point spurious data packets are being reported by a device even though the
+             * client did not request any data be delivered. Here we call cleanup to attempt to
+             * put the devices in to a known state where every data type is disabled.
+             */
+            cleanup();
+            return;
+        }
+
         for (OpenSpatialData d: dataList) {
             mServiceInterface.onDataReceived(d);
         }
@@ -644,10 +653,6 @@ public class OpenSpatialService extends Service {
                 Log.e(TAG, "Cleanup failed to unregister from " + type.name() + " events for " +
                         device.getName() + " with error: " + e.getMessage());
             }
-
-            for (DataType dataType : DataType.values()) {
-                disableData(device, dataType);
-            }
         }
     }
 
@@ -656,6 +661,13 @@ public class OpenSpatialService extends Service {
         synchronized (mEventCallbacks) {
             devices = new HashSet<BluetoothDevice>(mEventCallbacks.keySet());
         }
+
+        for (BluetoothDevice device : devices) {
+            for (DataType dataType : DataType.values()) {
+                disableData(device, dataType);
+            }
+        }
+
         for(OpenSpatialEvent.EventType type : OpenSpatialEvent.EventType.values()) {
             cleanup(devices, type);
         }
