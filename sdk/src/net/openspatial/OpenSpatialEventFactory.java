@@ -460,7 +460,8 @@ public class OpenSpatialEventFactory {
 
         byte[] bufferArray = buffer.array();
 
-        String identifier = new String(bufferArray, Charset.forName("UTF-8"));
+        String identifier = new String(Arrays.copyOfRange(bufferArray, 4, bufferArray.length),
+                Charset.forName("UTF-8"));
 
         iface.onGetIdentifierResponse(device, dataType, index, responseCode,identifier);
     }
