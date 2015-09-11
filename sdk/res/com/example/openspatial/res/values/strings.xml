@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">OpenSpatialExample</string>
+    <string name="connected_devices">Connected Devices</string>
+    <string name="data_type">Data Type</string>
+    <string name="on">On</string>
+    <string name="off">Off</string>
+    <string name="no_connected_devices">No connected devices found.</string>
 </resources>

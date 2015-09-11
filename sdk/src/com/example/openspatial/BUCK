@@ -3,8 +3,7 @@ android_library(
   srcs = glob(['*.java']),
   deps = [
     '//res/com/example/openspatial:res',
-    '//release:OpenSpatialSDK',
-    '//src/com/nod_labs/pointer:NodPointer',
+    '//src/net/openspatial:OpenSpatialSDK',
     '//thirdparty:roboguice',
     '//thirdparty:guice',
     '//thirdparty:jsr330',
@@ -18,4 +17,3 @@ android_library(
 project_config(
   src_target = ':ExampleApp',
 )
-
