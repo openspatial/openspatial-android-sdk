@@ -684,8 +684,8 @@ public class OpenSpatialEventFactory {
     }
 
     private RelativeXYData decodeXYData(BluetoothDevice device, ByteBuffer buffer) {
-        int[] values = new int[3];
-        for(int i = 0; i < 3; i++) {
+        int[] values = new int[2];
+        for(int i = 0; i < 2; i++) {
             values[i] = buffer.getShort();
         }
 
