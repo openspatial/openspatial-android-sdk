@@ -544,12 +544,21 @@ public class OpenSpatialEventFactory {
                         responseValues);
                 break;
             case GET_PARAMETER_RANGE:
-                iface.onGetParameterRangeResponse(device,
-                        dataType,
-                        deviceParameter,
-                        responseCode,
-                        responseValues[0],
-                        responseValues[1]);
+                if (responseValues.length >= 2) {
+                    iface.onGetParameterRangeResponse(device,
+                            dataType,
+                            deviceParameter,
+                            responseCode,
+                            responseValues[0],
+                            responseValues[1]);
+                } else {
+                    iface.onGetParameterRangeResponse(device,
+                            dataType,
+                            deviceParameter,
+                            responseCode,
+                            0,
+                            0);
+                }
                 break;
             default:
                 Log.e(TAG, "Decoded wrong command type! " + commandType.name());
