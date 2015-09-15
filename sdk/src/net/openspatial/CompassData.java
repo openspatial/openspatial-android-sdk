@@ -17,37 +17,36 @@
 package net.openspatial;
 
 import android.bluetooth.BluetoothDevice;
-import android.os.Parcel;
-import android.os.Parcelable;
 
 import java.util.Arrays;
 
 /**
- * Contains the raw, unprocessed readings from the compass/magnetometer of an OpenSpatial
- * device in units of uT.
+ * Contains raw compass LSB readings. Use the FSR value obtained from
+ * {@link OpenSpatialService#getParameter(BluetoothDevice, DataType, DeviceParameter)} to convert
+ * the values in to units of uT.
  */
 public class CompassData extends OpenSpatialData {
 
-    private final int[] compassData;
+    private final short[] compassData;
 
     /**
      * @return A compass reading in the x axis (in uT)
      */
-    public int getX() {
+    public short getX() {
         return compassData[X];
     }
 
     /**
      * @return A compass reading in the y axis (in uT)
      */
-    public int getY() {
+    public short getY() {
         return compassData[Y];
     }
 
     /**
      * @return A compass reading in the z axis (in uT)
      */
-    public int getZ() {
+    public short getZ() {
         return compassData[Z];
     }
 
@@ -56,7 +55,7 @@ public class CompassData extends OpenSpatialData {
      * @param device {@link BluetoothDevice} that sent this data
      * @param compassData Reported compass values
      */
-    protected CompassData(BluetoothDevice device, int[] compassData) {
+    protected CompassData(BluetoothDevice device, short[] compassData) {
         super(device, DataType.RAW_COMPASS);
         this.compassData = compassData;
     }

@@ -642,10 +642,9 @@ public class OpenSpatialEventFactory {
     }
 
     private AccelerometerData decodeAccelData(BluetoothDevice device, ByteBuffer buffer) {
-
-        float[] values = new float[3];
+        short[] values = new short[3];
         for(int i = 0; i < 3; i++) {
-            values[i] = getAccelReadingFromInt16(buffer.getShort());
+            values[i] = buffer.getShort();
         }
 
         return new AccelerometerData(device, values);
@@ -653,7 +652,7 @@ public class OpenSpatialEventFactory {
 
     private CompassData decodeCompassData(
             BluetoothDevice device, ByteBuffer buffer) {
-        int[] values = new int[3];
+        short[] values = new short[3];
         for(int i = 0; i < 3; i++) {
             values[i] = buffer.getShort();
         }
@@ -662,9 +661,9 @@ public class OpenSpatialEventFactory {
     }
 
     private GyroscopeData decodeGyroData(BluetoothDevice device, ByteBuffer buffer) {
-        float[] values = new float[3];
+        short[] values = new short[3];
         for(int i = 0; i < 3; i++) {
-            values[i] = getGyroReadingFromInt16(buffer.getShort());
+            values[i] = buffer.getShort();
         }
 
         return new GyroscopeData(device, values);

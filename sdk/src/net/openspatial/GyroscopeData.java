@@ -21,18 +21,19 @@ import android.bluetooth.BluetoothDevice;
 import java.util.Arrays;
 
 /**
- * Contains the raw, unprocessed readings from the gyroscope of an OpenSpatial device in
- * radians/second.
+ * Contains raw accelerometer LSB readings. Use the FSR value obtained from
+ * {@link OpenSpatialService#getParameter(BluetoothDevice, DataType, DeviceParameter)} to convert
+ * the values in to units of degrees/second.
  */
 public class GyroscopeData extends OpenSpatialData {
 
-    private final float[] gyroData;
+    private final short[] gyroData;
 
     /**
      * A Gyroscope reading in the x axis.
      * @return Gyroscopic sensor reading about the x axis.
      */
-    public float getX() {
+    public short getX() {
         return gyroData[X];
     }
 
@@ -40,7 +41,7 @@ public class GyroscopeData extends OpenSpatialData {
      * A Gyroscope reading in the y axis.
      * @return Gyroscopic sensor reading about the y axis.
      */
-    public float getY() {
+    public short getY() {
         return gyroData[Y];
     }
 
@@ -48,7 +49,7 @@ public class GyroscopeData extends OpenSpatialData {
      * A Gyroscope reading in the z axis
      * @return Gyroscopic sensor reading about the x axis.
      */
-    public float getZ() {
+    public short getZ() {
         return gyroData[Z];
     }
 
@@ -57,7 +58,7 @@ public class GyroscopeData extends OpenSpatialData {
      * @param device The device reporting the gyroscopic data.
      * @param gyroData The reported Gyroscopic data.
      */
-    protected GyroscopeData(BluetoothDevice device, float[] gyroData) {
+    protected GyroscopeData(BluetoothDevice device, short[] gyroData) {
         super(device, DataType.RAW_GYRO);
         this.gyroData = gyroData;
     }

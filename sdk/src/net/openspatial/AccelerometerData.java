@@ -17,36 +17,36 @@
 package net.openspatial;
 
 import android.bluetooth.BluetoothDevice;
-import android.os.Parcel;
-import android.os.Parcelable;
 
 import java.util.Arrays;
 
 /**
- * Contains raw accelerometer in units of G.
+ * Contains raw accelerometer LSB readings. Use the FSR value obtained from
+ * {@link OpenSpatialService#getParameter(BluetoothDevice, DataType, DeviceParameter)} to convert
+ * the values in to units of G.
  */
 public class AccelerometerData extends OpenSpatialData {
 
-    private final float[] accelData;
+    private final short[] accelData;
 
     /**
      * @return Accelerometer reading about x axis.
      */
-    public float getX() {
+    public short getX() {
         return accelData[X];
     }
 
     /**
      * @return Accelerometer reading about y axis.
      */
-    public float getY() {
+    public short getY() {
         return accelData[Y];
     }
 
     /**
      * @return Accelerometer reading about z axis.
      */
-    public float getZ() {
+    public short getZ() {
         return accelData[Z];
     }
 
@@ -55,7 +55,7 @@ public class AccelerometerData extends OpenSpatialData {
      * @param device {@link BluetoothDevice} that sent this data
      * @param accelData Reported accelerometer values.
      */
-    protected AccelerometerData(BluetoothDevice device, float[] accelData) {
+    protected AccelerometerData(BluetoothDevice device, short[] accelData) {
         super(device, DataType.RAW_ACCELEROMETER);
         this.accelData = accelData;
     }
