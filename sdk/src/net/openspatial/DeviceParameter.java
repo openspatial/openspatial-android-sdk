@@ -77,7 +77,17 @@ public enum DeviceParameter {
      * The scale factors for {@link RelativeXYData} which are provided in the form of high and low
      * values for both {@code X} and {@code Y} axes.
      */
-    RELATIVE_XY_SCALE_FACTORS(0x3);
+    RELATIVE_XY_SCALE_FACTORS(0x3),
+
+    /**
+     * Generic index coresponding to the zeroth item.
+     */
+    GENERIC_INDEX_0(0x0),
+
+    /**
+     * Generic index coresponding to the first item.
+     */
+    GENERIC_INDEX_1(0x1);
 
     private final byte id;
 
@@ -109,5 +119,12 @@ public enum DeviceParameter {
         sensorParameters.add(SENSOR_FULL_SCALE_RANGE);
         sensorParameters.add(SENSOR_QUANTITY);
         sensorParameters.add(RELATIVE_XY_SCALE_FACTORS);
+    }
+
+    protected static Set<DeviceParameter> indexParameters = new HashSet<DeviceParameter>();
+
+    static {
+        indexParameters.add(GENERIC_INDEX_0);
+        indexParameters.add(GENERIC_INDEX_1);
     }
 }

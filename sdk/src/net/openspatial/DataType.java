@@ -33,6 +33,7 @@ public enum DataType {
     GESTURE(0xa0),
     SLIDER(0xa1),
     BUTTON(0xa2),
+    HAPTIC(0x36),
     GENERAL_DEVICE_INFORMATION(0xff);
 
     private final byte id;

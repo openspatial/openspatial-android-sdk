@@ -407,8 +407,12 @@ public class OpenSpatialEventFactory {
             case GENERAL_DEVICE_INFORMATION:
                 params = DeviceParameter.generalDeviceParameters;
                 break;
+            case HAPTIC:
+                params = DeviceParameter.indexParameters;
+                break;
             default:
                 params = DeviceParameter.sensorParameters;
+                break;
         }
 
         for (DeviceParameter param : params) {
@@ -679,7 +683,7 @@ public class OpenSpatialEventFactory {
     }
 
     private float getTranslationReadingFromShort(short value) {
-        return (float) (value / (1 << 6));
+        return (float) (value);
     }
 
     private TranslationData decodeTranslationData(BluetoothDevice device, ByteBuffer buffer) {

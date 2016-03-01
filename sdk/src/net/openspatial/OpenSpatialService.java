@@ -355,7 +355,8 @@ public class OpenSpatialService extends Service {
         sendOpenSpatialControlCommand(device,
                 CommandType.SET_PARAMETER.getValue(),
                 dataType.getValue(),
-                deviceParameter.getValue());
+                deviceParameter.getValue(),
+                newValue);
     }
 
     /**
@@ -540,11 +541,6 @@ public class OpenSpatialService extends Service {
         List<OpenSpatialData> dataList = mEventFactory.decodeOpenSpatialDataPacket(device, data);
 
         if (mServiceInterface == null) {
-            /* At this point spurious data packets are being reported by a device even though the
-             * client did not request any data be delivered. Here we call cleanup to attempt to
-             * put the devices in to a known state where every data type is disabled.
-             */
-            cleanup();
             return;
         }
 
